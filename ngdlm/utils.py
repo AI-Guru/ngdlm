@@ -84,3 +84,13 @@ def render_embeddings(embeddings, rows, columns, title=None):
 
     plt.show()
     plt.close()
+
+
+def render_encodings(encoder, x_input, y_output):
+
+    x_test_encoded = encoder.predict(x_input, batch_size=32)[0]
+    plt.figure(figsize=(6, 6))
+    plt.scatter(x_test_encoded[:, 0], x_test_encoded[:, 1], c=y_output)
+    plt.colorbar()
+    plt.show()
+    plt.close()

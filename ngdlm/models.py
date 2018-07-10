@@ -1,27 +1,30 @@
 from keras.engine.training import Model
-from keras import layers, optimizers
+from keras import layers, optimizers, losses
 from keras import backend as K
+import numpy as np
+
 
 class AE(Model):
     """ Autoencoder. """
 
-    def __init__(self, latent_dim, activation="relu"):
-        print("Initializing AE")
+    def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim, activation="relu"):
 
         self.latent_dim = latent_dim
 
-
-    def set_encoder(self, encoder_input, encoder_output):
+        # Creating the encoder.
         self.encoder_input = encoder_input
-        self.encoder_output = layers.Dense(self.latent_dim, activation=self.activation)(encoder_output)
+        self.encoder_output = layers.Dense(self.latent_dim, activation=activation)(encoder_output)
         self.encoder = Model(self.encoder_input, self.encoder_output, name="encoder")
 
-
-    def set_decoder(self, decoder_input, decoder_output):
+        # Creating the decoder.
         self.decoder_input = decoder_input
         self.decoder_output = decoder_output
         self.decoder = Model(self.decoder_input, self.decoder_output, name="decoder")
-        #self.model = Model(self.encoder_input, self.decoder_output)
+
+        # Creating the AE.
+        inputs = self.encoder.inputs[0]
+        outputs = self.decoder(self.encoder(inputs))
+        self.model = Model(inputs, outputs, name='ae')
 
 
     def compile(
@@ -35,12 +38,8 @@ class AE(Model):
         target_tensors=None,
         **kwargs):
 
-        inputs = self.encoder.inputs[0]
-        outputs = self.decoder(self.encoder(inputs))
-        self.model = Model(inputs, outputs, name='ae')
         self.model.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
 
-        return self.model
 
     def fit(
         self,
@@ -92,39 +91,65 @@ class AE(Model):
 class VAE(AE):
     """ Variational Autoencoder. """
 
+    def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim):
 
-    def set_encoder(self, encoder_input, encoder_output):
+        self.latent_dim = latent_dim
+
+        # Creating the encoder.
         self.encoder_input = encoder_input
-
-        # Latent layers. Mean, variation and reparametrization trick.
-        z_mean = layers.Dense(self.latent_dim, name='z_mean', activation=self.activation)(encoder_output)
-        z_log_var = layers.Dense(self.latent_dim, name='z_log_var', activation=self.activation)(encoder_output)
+        z_mean = layers.Dense(self.latent_dim, name='z_mean')(encoder_output)
+        z_log_var = layers.Dense(self.latent_dim, name='z_log_var')(encoder_output)
         z =layers.Lambda(sampling, output_shape=(self.latent_dim,), name='z')([z_mean, z_log_var])
-
         self.encoder_output = z
         self.encoder = Model(encoder_input, [z_mean, z_log_var, z], name='encoder')
 
+        # Creating the decoder.
+        self.decoder_input = decoder_input
+        self.decoder_output = decoder_output
+        self.decoder = Model(self.decoder_input, self.decoder_output, name="decoder")
 
-    def create_model(self):
+        # Creating the VAE.
+        inputs = self.encoder.inputs[0]
+        outputs = self.decoder(self.encoder(inputs)[2]) # This is z.
+        self.model = Model(inputs, outputs, name="vae")
+
+
+    def compile(
+        self,
+        optimizer,
+        loss=None,
+        metrics=None,
+        loss_weights=None,
+        sample_weight_mode=None,
+        weighted_metrics=None,
+        target_tensors=None,
+        reconstruction_loss="mse",
+        **kwargs):
+
         # Inputs.
         inputs = self.encoder.inputs[0]
+        inputs_dim = int(np.prod(inputs.shape.as_list()[1:]))
 
         # Outputs.
         z_mean = self.encoder.outputs[0]
         z_log_var = self.encoder.outputs[1]
         outputs = self.decoder(self.encoder(inputs)[2]) # This is z.
 
-        # Create the model.
-        self.model = Model(inputs, outputs, name='vae_mlp')
-
-        # TODO use other loss here. https://blog.keras.io/building-autoencoders-in-keras.html
+        # Define the loss.
         def vae_loss(loss_inputs, loss_outputs):
+
+            # Flatten all to accept different dimensions.
+            loss_inputs = K.flatten(loss_inputs)
+            loss_outputs = K.flatten(loss_outputs)
+
             # Reconstruction loss.
-            if reconstruction_loss_type == "mse":
-                reconstruction_loss = mse(loss_inputs, loss_outputs)
-            elif reconstruction_loss_type == "binary_crossentropy":
-                reconstruction_loss = binary_crossentropy(loss_inputs, loss_outputs)
-            reconstruction_loss *= original_dim
+            if reconstruction_loss == "mse":
+                r_loss = losses.mse(loss_inputs, loss_outputs)
+            elif reconstruction_loss == "binary_crossentropy":
+                r_loss = losses.binary_crossentropy(loss_inputs, loss_outputs)
+            else:
+                raise Exception("Unexpected: " + str(reconstruction_loss))
+            r_loss *= inputs_dim
 
             # kl loss.
             kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
@@ -132,20 +157,14 @@ class VAE(AE):
             kl_loss *= -0.5
 
             # VAE loss.
-            vae_loss = K.mean(reconstruction_loss + kl_loss)
+            vae_loss = K.mean(r_loss + kl_loss)
             return vae_loss
 
-
         # Compile model.
-        self.model.compile(optimizer=optimizers.Adam(lr=learning_rate), loss=vae_loss)
+        loss = vae_loss
+        self.model.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
 
-        return self.model
 
-
-# reparameterization trick
-# instead of sampling from Q(z|X), sample eps = N(0,I)
-# z = z_mean + sqrt(var)*eps
-# TODO use sampling from https://blog.keras.io/building-autoencoders-in-keras.html
 def sampling(args):
     """Reparameterization trick by sampling fr an isotropic unit Gaussian.
 
