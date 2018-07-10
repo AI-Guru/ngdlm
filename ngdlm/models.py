@@ -61,6 +61,26 @@ class AE(Model):
 
         return self.model.fit(x, y, batch_size, epochs, verbose, callbacks, validation_split, validation_data, shuffle, class_weight, sample_weight, initial_epoch, steps_per_epoch, validation_steps, **kwargs)
 
+
+    def fit_generator(
+        self,
+        generator,
+        steps_per_epoch=None,
+        epochs=1,
+        verbose=1,
+        callbacks=None,
+        validation_data=None,
+        validation_steps=None,
+        class_weight=None,
+        max_queue_size=10,
+        workers=1,
+        use_multiprocessing=False,
+        shuffle=True,
+        initial_epoch=0):
+
+        return self.model.fit_generator(generator, steps_per_epoch, epochs, verbose, callbacks, validation_data, validation_steps, class_weight, max_queue_size, workers, use_multiprocessing, shuffle, initial_epoch)
+
+
     def evaluate(
         self,
         x=None,
