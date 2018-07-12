@@ -1,8 +1,24 @@
+"""
+Utility functions for NGDLM. General rendering and building models.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
+from ngdlm import models as ngdlmodels
+from keras import models, layers
 
 
 def render_history(history):
+    """
+    Renders a training history.
+
+    Args:
+        history: A Keras history object.
+
+    Returns:
+        None
+    """
+
     plt.plot(history.history["loss"], label="loss")
     if "val_loss" in history.history.keys():
         plt.plot(history.history["val_loss"], label="val_loss")
@@ -11,33 +27,52 @@ def render_history(history):
     plt.close()
 
 
-def render_image_reconstructions(model, x_input, n):
+def render_image_reconstructions(model, x_input, cmap=None):
+    """
+    Renders reconstructions as images.
+
+    Takes an array of input samples, predicts the reconstructions using the model and renders them.
+
+    Args:
+        model (Model): A model for predicting the reconstructions.
+        x_input (ndarray): A array of input samples.
+
+    Returns:
+        None
+    """
+
+
     assert len(x_input.shape) == 3 or len(x_input.shape) == 4, "Expected data to have 3 or 4 dimensions."
+
+    n = len(x_input)
 
     plt.figure(figsize=(20, 4))
 
-    decoded_images = model.predict(x_input[0:n])
+    decoded_images = model.predict(x_input)
 
     for i in range(n):
 
         # Original.
         ax = plt.subplot(2, n, i + 1)
-        plt.imshow(x_input[i])
+        plt.imshow(x_input[i], cmap=cmap)
         plt.gray()
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
+        plt.title("Original")
 
         # Reconstruction.
         ax = plt.subplot(2, n, i + 1 + n)
-        plt.imshow(decoded_images[i])
+        plt.imshow(decoded_images[i], cmap=cmap)
         plt.gray()
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
+        plt.title("Reconstruction")
+
     plt.show()
     plt.close()
 
 
-def render_image_latent_space(decoder, number_of_samples, latent_dim_1=0, latent_dim_2=1, space_range=4):
+def render_image_latent_space(decoder, number_of_samples, latent_dim_1=0, latent_dim_2=1, space_range=4, cmap=None):
 
     latent_dim = decoder.inputs[0].shape[1]
 
@@ -56,10 +91,10 @@ def render_image_latent_space(decoder, number_of_samples, latent_dim_1=0, latent
             embeddings.append(embedding)
     embeddings = np.array(embeddings)
 
-    render_embeddings(embeddings, rows=number_of_samples, columns=number_of_samples)
+    render_embeddings(embeddings, rows=number_of_samples, columns=number_of_samples, cmap=cmap)
 
 
-def render_embeddings(embeddings, rows, columns, title=None):
+def render_embeddings(embeddings, rows, columns, title=None, cmap=None):
 
     figure = plt.figure(figsize=(24, 24))
     figure.subplots_adjust(hspace=0.1, wspace=0.001)
@@ -74,7 +109,7 @@ def render_embeddings(embeddings, rows, columns, title=None):
             #embedding = np.array(embedding)
 
             axis = figure.add_subplot(rows, columns, index + 1)
-            axis.imshow(embedding, cmap="gray")
+            axis.imshow(embedding, cmap=cmap)
             axis.axis('off')
 
             if title != None:
@@ -88,9 +123,49 @@ def render_embeddings(embeddings, rows, columns, title=None):
 
 def render_encodings(encoder, x_input, y_output):
 
-    x_test_encoded = encoder.predict(x_input, batch_size=32)[0]
+    x_test_encoded = encoder.predict(x_input, batch_size=32)
+    if len(encoder.outputs) == 3:
+        x_test_encoded = x_test_encoded[0]
+
     plt.figure(figsize=(6, 6))
     plt.scatter(x_test_encoded[:, 0], x_test_encoded[:, 1], c=y_output, cmap="inferno")
     plt.colorbar()
     plt.show()
     plt.close()
+
+
+def build_dense_ae(input_shape, latent_dim, hidden_units=[], hidden_activation="relu"):
+    return _build_dense(type="ae", input_shape=input_shape, latent_dim=latent_dim, hidden_units=hidden_units, hidden_activation=hidden_activation)
+
+
+def build_dense_vae(input_shape, latent_dim, hidden_units=[], hidden_activation="relu"):
+    return _build_dense(type="vae", input_shape=input_shape, latent_dim=latent_dim, hidden_units=hidden_units, hidden_activation=hidden_activation)
+
+
+def _build_dense(type, input_shape, latent_dim, hidden_units=[], hidden_activation="relu"):
+
+    # Some useful variables.
+    input_size = np.prod(input_shape)
+    hidden_units_reverse = hidden_units[::-1]
+
+    # Create the encoder.
+    encoder_input = layers.Input(shape=input_shape)
+    encoder_output = layers.Reshape((input_size,))(encoder_input)
+    for hidden in hidden_units:
+        encoder_output = layers.Dense(hidden, activation=hidden_activation)(encoder_output)
+
+    # Create the decoder.
+    decoder_input = layers.Input(shape=(latent_dim,))
+    decoder_output = decoder_input
+    for hidden in hidden_units_reverse:
+        decoder_output = layers.Dense(hidden, activation=hidden_activation)(decoder_output)
+    decoder_output = layers.Dense(input_size, activation="sigmoid")(decoder_output)
+    decoder_output = layers.Reshape(input_shape)(decoder_output)
+
+    # Create the autoencoder.
+    if type == "ae":
+        ae = ngdlmodels.AE(encoder_input, encoder_output, decoder_input, decoder_output, latent_dim=latent_dim)
+        return ae
+    elif type == "vae":
+        vae = ngdlmodels.VAE(encoder_input, encoder_output, decoder_input, decoder_output, latent_dim=latent_dim)
+        return vae

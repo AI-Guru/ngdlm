@@ -38,6 +38,8 @@ class AE(Model):
         target_tensors=None,
         **kwargs):
 
+        assert "reconstruction_loss" not in kwargs, "Not expected to use reconstruction_loss in AE."
+
         self.model.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
 
 
@@ -145,6 +147,8 @@ class VAE(AE):
         target_tensors=None,
         reconstruction_loss="mse",
         **kwargs):
+
+        assert loss == None, "Not expected to provide an explicit loss for VAE."
 
         # Inputs.
         inputs = self.encoder.inputs[0]
