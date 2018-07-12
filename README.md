@@ -1,7 +1,7 @@
 ngdlm
 ===============================
 
-version number: 0.0.1
+version number: 0.0.1-rc1
 author: Tristan Behrens
 
 Overview
@@ -16,12 +16,14 @@ To install use pip:
 
     $ pip install ngdlm
 
+    $ pip install git+https://github.com/ai-guru/ngdlm.git
+
 
 Or clone the repo:
 
     $ git clone https://github.com/ai-guru/ngdlm.git
     $ python setup.py install
-    
+
 Contributing
 ------------
 
