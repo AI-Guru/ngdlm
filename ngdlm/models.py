@@ -13,7 +13,7 @@ class AE(Model):
 
         # Creating the encoder.
         self.encoder_input = encoder_input
-        self.encoder_output = layers.Dense(self.latent_dim, activation=activation)(encoder_output)
+        self.encoder_output = encoder_output
         self.encoder = Model(self.encoder_input, self.encoder_output, name="encoder")
 
         # Creating the decoder.

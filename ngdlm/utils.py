@@ -153,6 +153,7 @@ def _build_dense(type, input_shape, latent_dim, hidden_units=[], hidden_activati
     encoder_output = layers.Reshape((input_size,))(encoder_input)
     for hidden in hidden_units:
         encoder_output = layers.Dense(hidden, activation=hidden_activation)(encoder_output)
+    encoder_output = layers.Dense(latent_dim, activation=hidden_activation)(encoder_output)
 
     # Create the decoder.
     decoder_input = layers.Input(shape=(latent_dim,))
