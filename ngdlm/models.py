@@ -1,3 +1,7 @@
+"""
+This module contains all next generation deep learning models.
+"""
+
 from keras.engine.training import Model
 from keras import layers, optimizers, losses
 from keras import backend as K
@@ -5,7 +9,7 @@ import numpy as np
 
 
 class AE(Model):
-    """ Autoencoder. """
+    """ Autoencoder. This is a simple autoencoder consisting of an encoder and a decoder."""
 
     def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim, activation="relu"):
         super(AE, self).__init__()
@@ -112,11 +116,11 @@ class AE(Model):
 
 
 class VAE(AE):
-    """ Variational Autoencoder. """
+    """ Variational Autoencoder. This consists of an encoder and a decoder plus an interpolateable latent space. """
 
     def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim):
-        super(AE, self).__init__()
-        
+        super(VAE, self).__init__()
+
         self.latent_dim = latent_dim
 
         # Creating the encoder.
@@ -184,6 +188,7 @@ class VAE(AE):
 
             # VAE loss.
             vae_loss = K.mean(r_loss + kl_loss)
+            vae_loss /= inputs_dim
             return vae_loss
 
         # Compile model.
@@ -210,13 +215,27 @@ def sampling(args):
     return z_mean + K.exp(0.5 * z_log_var) * epsilon
 
 
-class TAE(Model):
+class TL(Model):
+
+    def __init__(self, base_input, base_output):
+        super(TL, self).__init__()
+        print("Initializing TL")
+
+        # Creating the base-model.
+        self.base_input = base_input
+        self.base_output = base_output
+        self.base = Model(self.base_input, self.base_output, name="base_model")
+
+        # TODO create siamese net
+
+
+class TLAE(Model):
 
     def __init__(self, encoder, decoder, latent_dim):
         print("Initializing TAE")
 
 
-class TVAE(Model):
+class TLVAE(Model):
 
     def __init__(self, encoder, decoder, latent_dim):
         print("Initializing TVAE")
