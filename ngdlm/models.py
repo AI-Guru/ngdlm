@@ -8,6 +8,7 @@ class AE(Model):
     """ Autoencoder. """
 
     def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim, activation="relu"):
+        super(AE, self).__init__()
 
         self.latent_dim = latent_dim
 
@@ -114,7 +115,8 @@ class VAE(AE):
     """ Variational Autoencoder. """
 
     def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim):
-
+        super(AE, self).__init__()
+        
         self.latent_dim = latent_dim
 
         # Creating the encoder.
