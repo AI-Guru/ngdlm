@@ -11,8 +11,15 @@ import numpy as np
 class AE(Model):
     """ Autoencoder. This is a simple autoencoder consisting of an encoder and a decoder."""
 
+
     def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim, activation="relu"):
         super(AE, self).__init__()
+
+        parameters = [encoder_input, encoder_output, decoder_input, decoder_output, latent_dim]
+        print(parameters)
+        if all(v is None for v in parameters):
+            print("Warschau!")
+            return
 
         self.latent_dim = latent_dim
 
@@ -118,8 +125,9 @@ class AE(Model):
 class VAE(AE):
     """ Variational Autoencoder. This consists of an encoder and a decoder plus an interpolateable latent space. """
 
+
     def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim):
-        super(VAE, self).__init__()
+        super(VAE, self).__init__(encoder_input=None, encoder_output=None, decoder_input=None, decoder_output=None, latent_dim=None)
 
         self.latent_dim = latent_dim
 
@@ -226,7 +234,118 @@ class TL(Model):
         self.base_output = base_output
         self.base = Model(self.base_input, self.base_output, name="base_model")
 
-        # TODO create siamese net
+        # Get the input shape.
+        input_shape = base_input.shape.as_list()[1:]
+
+        # Create the anchor.
+        input_anchor = layers.Input(shape=input_shape)
+        output_anchor = input_anchor
+        output_anchor = self.base(output_anchor)
+
+        # Create the positive.
+        input_positive = layers.Input(shape=input_shape)
+        output_positive = input_positive
+        output_positive = self.base(output_positive)
+
+        # Create the negative.
+        input_negative = layers.Input(shape=input_shape)
+        output_negative = input_negative
+        output_negative = self.base(output_negative)
+
+        # Create a dummy output.
+        output = layers.concatenate([output_anchor, output_positive, output_negative])
+
+        # Create the model.
+        self.model = Model([input_anchor, input_positive, input_negative], output, name="triplet_model")
+
+
+    def compile(
+        self,
+        optimizer,
+        loss=None,
+        metrics=None,
+        loss_weights=None,
+        sample_weight_mode=None,
+        weighted_metrics=None,
+        target_tensors=None,
+        reconstruction_loss="mse",
+        **kwargs):
+        print("TODO: implement compile!")
+
+        # TODO add the loss
+
+
+    def fit(
+        self,
+        x=None,
+        y=None,
+        batch_size=None,
+        epochs=1,
+        verbose=1,
+        callbacks=None,
+        validation_split=0.,
+        validation_data=None,
+        shuffle=True,
+        class_weight=None,
+        sample_weight=None,
+        initial_epoch=0,
+        steps_per_epoch=None,
+        validation_steps=None,
+        **kwargs):
+
+        print("TODO: implement fit!")
+
+
+        return self.model.fit(x, y, batch_size, epochs, verbose, callbacks, validation_split, validation_data, shuffle, class_weight, sample_weight, initial_epoch, steps_per_epoch, validation_steps, **kwargs)
+
+
+    def fit_generator(
+        self,
+        generator,
+        steps_per_epoch=None,
+        epochs=1,
+        verbose=1,
+        callbacks=None,
+        validation_data=None,
+        validation_steps=None,
+        class_weight=None,
+        max_queue_size=10,
+        workers=1,
+        use_multiprocessing=False,
+        shuffle=True,
+        initial_epoch=0):
+
+        print("TODO: implement fit_generator!")
+
+        return self.model.fit_generator(generator, steps_per_epoch, epochs, verbose, callbacks, validation_data, validation_steps, class_weight, max_queue_size, workers, use_multiprocessing, shuffle, initial_epoch)
+
+
+    def evaluate(
+        self,
+        x=None,
+        y=None,
+        batch_size=None,
+        verbose=1,
+        sample_weight=None,
+        steps=None):
+
+        return self.model.evaluate(x, y, batch_size, verbose, sample_weight, steps=None)
+
+
+    def predict(
+        self,
+        x,
+        batch_size=None,
+        verbose=0,
+        steps=None):
+
+        return self.model.predict(x, batch_size, verbose, steps)
+
+
+    def summary(self):
+        self.base.summary()
+        self.model.summary()
+
 
 
 class TLAE(Model):
