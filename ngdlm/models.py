@@ -15,10 +15,9 @@ class AE(Model):
     def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim, activation="relu"):
         super(AE, self).__init__()
 
+        # For calling this as a super-constructor.
         parameters = [encoder_input, encoder_output, decoder_input, decoder_output, latent_dim]
-        print(parameters)
         if all(v is None for v in parameters):
-            print("Warschau!")
             return
 
         self.latent_dim = latent_dim
@@ -92,7 +91,19 @@ class AE(Model):
         shuffle=True,
         initial_epoch=0):
 
-        return self.model.fit_generator(generator, steps_per_epoch, epochs, verbose, callbacks, validation_data, validation_steps, class_weight, max_queue_size, workers, use_multiprocessing, shuffle, initial_epoch)
+        #return self.model.fit_generator(generator, steps_per_epoch, epochs, verbose, callbacks, validation_data, validation_steps, class_weight, max_queue_size, workers, use_multiprocessing, shuffle, initial_epoch)
+        return self.model.fit_generator(
+            generator, steps_per_epoch, epochs,
+            verbose=verbose,
+            callbacks=callbacks,
+            validation_data=validation_data,
+            validation_steps=validation_steps,
+            class_weight=class_weight,
+            max_queue_size=max_queue_size,
+            workers=workers,
+            use_multiprocessing=use_multiprocessing,
+            shuffle=shuffle,
+            initial_epoch=initial_epoch)
 
 
     def evaluate(
