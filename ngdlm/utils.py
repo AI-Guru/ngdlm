@@ -24,9 +24,12 @@ def render_history(history):
         print("WARNING! No history provided!")
         return
 
-    plt.plot(history.history["loss"], label="loss")
-    if "val_loss" in history.history.keys():
-        plt.plot(history.history["val_loss"], label="val_loss")
+    if type(history) != dict:
+        history = history.history
+
+    plt.plot(history["loss"], label="loss")
+    if "val_loss" in history.keys():
+        plt.plot(history["val_loss"], label="val_loss")
     plt.legend()
     plt.show()
     plt.close()
