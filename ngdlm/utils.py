@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ngdlm import models as ngdlmodels
 from keras import models, layers
+from PIL import Image
 
 
 def render_history(history):
@@ -19,6 +20,10 @@ def render_history(history):
         None
     """
 
+    if history == None:
+        print("WARNING! No history provided!")
+        return
+
     plt.plot(history.history["loss"], label="loss")
     if "val_loss" in history.history.keys():
         plt.plot(history.history["val_loss"], label="val_loss")
@@ -27,7 +32,7 @@ def render_history(history):
     plt.close()
 
 
-def render_image_reconstructions(model, x_input, cmap=None):
+def render_image_reconstructions(model, x_input, cmap="gray", image_size=None):
     """
     Renders reconstructions as images.
 
@@ -52,18 +57,29 @@ def render_image_reconstructions(model, x_input, cmap=None):
 
     for i in range(n):
 
+        # Getting the images.
+        image_original = x_input[i]
+        image_reconstructed = decoded_images[i]
+
+        # Optional resizing.
+        if image_size != None:
+            image_original = Image.fromarray(image_original)
+            image_original = image_original.resize(image_size, Image.ANTIALIAS)
+            image_original = np.array(image_original)
+            image_reconstructed = Image.fromarray(image_reconstructed)
+            image_reconstructed = image_reconstructed.resize(image_size, Image.ANTIALIAS)
+            image_reconstructed = np.array(image_reconstructed)
+
         # Original.
         ax = plt.subplot(2, n, i + 1)
-        plt.imshow(x_input[i], cmap=cmap)
-        plt.gray()
+        plt.imshow(image_original, cmap=cmap)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         plt.title("Original")
 
         # Reconstruction.
         ax = plt.subplot(2, n, i + 1 + n)
-        plt.imshow(decoded_images[i], cmap=cmap)
-        plt.gray()
+        plt.imshow(image_reconstructed, cmap=cmap)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         plt.title("Reconstruction")
