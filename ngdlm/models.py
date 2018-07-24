@@ -197,6 +197,8 @@ class VAE(AE):
                 r_loss = losses.mse(loss_inputs, loss_outputs)
             elif reconstruction_loss == "binary_crossentropy":
                 r_loss = losses.binary_crossentropy(loss_inputs, loss_outputs)
+            elif reconstruction_loss == "categorical_crossentropy":
+                r_loss = losses.categorical_crossentropy(loss_inputs, loss_outputs)
             else:
                 raise Exception("Unexpected: " + str(reconstruction_loss))
             r_loss *= inputs_dim

@@ -9,7 +9,7 @@ from keras import models, layers
 from PIL import Image
 
 
-def render_history(history):
+def render_history(history, zero_limit=False):
     """
     Renders a training history.
 
@@ -30,6 +30,8 @@ def render_history(history):
     plt.plot(history["loss"], label="loss")
     if "val_loss" in history.keys():
         plt.plot(history["val_loss"], label="val_loss")
+    if zero_limit == True:
+        plt.ylim(ymin=0.0)
     plt.legend()
     plt.show()
     plt.close()
