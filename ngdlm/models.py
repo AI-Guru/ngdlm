@@ -13,25 +13,44 @@ class AE(Model):
     """ Autoencoder. This is a simple autoencoder consisting of an encoder and a decoder."""
 
 
-    def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim, activation="relu"):
+    def __init__(
+        self,
+        encoder=None, decoder=None,
+        encoder_input=None, encoder_output=None, decoder_input=None, decoder_output=None,
+        activation="relu"):
         super(AE, self).__init__()
 
         # For calling this as a super-constructor.
-        parameters = [encoder_input, encoder_output, decoder_input, decoder_output, latent_dim]
+        parameters = [encoder, decoder, encoder_input, encoder_output, decoder_input, decoder_output]
         if all(v is None for v in parameters):
             return
 
-        self.latent_dim = latent_dim
+        # Check if it is either sequential or functional.
+        assert (encoder != None and decoder != None) or (encoder_input != None and encoder_output != None and decoder_input != None and decoder_output != None)
 
-        # Creating the encoder.
-        self.encoder_input = encoder_input
-        self.encoder_output = encoder_output
-        self.encoder = Model(self.encoder_input, self.encoder_output, name="encoder")
+        # Sequential.
+        if encoder != None and decoder != None:
+            assert len(encoder.outputs) == 1
+            assert len(decoder.inputs) == 1
+            assert encoder.outputs[0].shape[1:] == decoder.inputs[0].shape[1:] , str(encoder.outputs[0].shape) + " " + str(decoder.inputs[0].shape)
+            self.latent_dim = encoder.outputs[0].shape[1]
 
-        # Creating the decoder.
-        self.decoder_input = decoder_input
-        self.decoder_output = decoder_output
-        self.decoder = Model(self.decoder_input, self.decoder_output, name="decoder")
+            self.encoder = encoder
+            self.decoder = decoder
+
+        # Functional.
+        if encoder_input != None and encoder_output != None and decoder_input != None and decoder_output != None:
+            self.latent_dim = encoder_output.shape[1:]
+
+            # Creating the encoder.
+            self.encoder_input = encoder_input
+            self.encoder_output = encoder_output
+            self.encoder = Model(self.encoder_input, self.encoder_output, name="encoder")
+
+            # Creating the decoder.
+            self.decoder_input = decoder_input
+            self.decoder_output = decoder_output
+            self.decoder = Model(self.decoder_input, self.decoder_output, name="decoder")
 
         # Creating the AE.
         inputs = self.encoder.inputs[0]
@@ -118,6 +137,7 @@ class AE(Model):
 
         return self.model.evaluate(x, y, batch_size, verbose, sample_weight, steps=None)
 
+
     def predict(
         self,
         x,
@@ -126,6 +146,7 @@ class AE(Model):
         steps=None):
 
         return self.model.predict(x, batch_size, verbose, steps)
+
 
     def summary(self):
         self.encoder.summary()
@@ -138,23 +159,46 @@ class VAE(AE):
     """ Variational Autoencoder. This consists of an encoder and a decoder plus an interpolateable latent space. """
 
 
-    def __init__(self, encoder_input, encoder_output, decoder_input, decoder_output, latent_dim):
-        super(VAE, self).__init__(encoder_input=None, encoder_output=None, decoder_input=None, decoder_output=None, latent_dim=None)
+    def __init__(
+        self,
+        encoder=None, decoder=None,
+        encoder_input=None, encoder_output=None, decoder_input=None, decoder_output=None,
+        latent_dim=None):
+        super(VAE, self).__init__(encoder=None, decoder=None, encoder_input=None, encoder_output=None, decoder_input=None, decoder_output=None)
 
+        # Check if it is either sequential or functional.
+        assert (encoder != None and decoder != None) or (encoder_input != None and encoder_output != None and decoder_input != None and decoder_output != None)
+
+        assert latent_dim != None
         self.latent_dim = latent_dim
 
-        # Creating the encoder.
-        self.encoder_input = encoder_input
-        z_mean = layers.Dense(self.latent_dim, name='z_mean')(encoder_output)
-        z_log_var = layers.Dense(self.latent_dim, name='z_log_var')(encoder_output)
-        z =layers.Lambda(sampling, output_shape=(self.latent_dim,), name='z')([z_mean, z_log_var])
-        self.encoder_output = z
-        self.encoder = Model(encoder_input, [z_mean, z_log_var, z], name='encoder')
+        # Sequential.
+        if encoder != None and decoder != None:
 
-        # Creating the decoder.
-        self.decoder_input = decoder_input
-        self.decoder_output = decoder_output
-        self.decoder = Model(self.decoder_input, self.decoder_output, name="decoder")
+            encoder_input = encoder.inputs[0]
+            encoder_output = encoder.outputs[0]
+            z_mean = layers.Dense(self.latent_dim, name='z_mean')(encoder_output)
+            z_log_var = layers.Dense(self.latent_dim, name='z_log_var')(encoder_output)
+            z =layers.Lambda(sampling, output_shape=(self.latent_dim,), name='z')([z_mean, z_log_var])
+            self.encoder = Model(encoder_input, [z_mean, z_log_var, z], name='encoder')
+
+            self.decoder = decoder
+
+        # Functional.
+        if encoder_input != None and encoder_output != None and decoder_input != None and decoder_output != None:
+
+            # Creating the encoder.
+            self.encoder_input = encoder_input
+            z_mean = layers.Dense(self.latent_dim, name='z_mean')(encoder_output)
+            z_log_var = layers.Dense(self.latent_dim, name='z_log_var')(encoder_output)
+            z =layers.Lambda(sampling, output_shape=(self.latent_dim,), name='z')([z_mean, z_log_var])
+            self.encoder_output = z
+            self.encoder = Model(encoder_input, [z_mean, z_log_var, z], name='encoder')
+
+            # Creating the decoder.
+            self.decoder_input = decoder_input
+            self.decoder_output = decoder_output
+            self.decoder = Model(self.decoder_input, self.decoder_output, name="decoder")
 
         # Creating the VAE.
         inputs = self.encoder.inputs[0]
