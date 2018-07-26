@@ -283,19 +283,27 @@ def sampling(args):
 
 class TL(Model):
 
-    def __init__(self, base_input, base_output):
+    def __init__(self, base=None, base_input=None, base_output=None):
         super(TL, self).__init__()
         print("Initializing TL")
 
-        self.latent_dim = base_output.shape[1]
+        assert (base != None) or (base_input != None and base_output != None)
+
+        if base != None:
+            self.base = base
 
         # Creating the base-model.
-        self.base_input = base_input
-        self.base_output = base_output
-        self.base = Model(self.base_input, self.base_output, name="base_model")
+        if base_input != None and base_output != None:
+
+            self.latent_dim = base_output.shape[1]
+
+            self.base_input = base_input
+            self.base_output = base_output
+            self.base = Model(self.base_input, self.base_output, name="base_model")
 
         # Get the input shape.
-        input_shape = base_input.shape.as_list()[1:]
+        input_shape = self.base.inputs[0].shape.as_list()[1:]
+        print(input_shape)
 
         # Create the anchor.
         input_anchor = layers.Input(shape=input_shape)

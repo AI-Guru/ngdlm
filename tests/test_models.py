@@ -73,6 +73,33 @@ class TestModels(unittest.TestCase):
         vae.summary()
 
 
+    def test_tl_functional(self):
+
+        # Base model.
+        base_model_input = layers.Input(shape=(100,))
+        base_model_output = base_model_input
+        base_model_output = layers.Dense(20, activation="relu")(base_model_output)
+
+        # Decoder.
+        decoder_input = layers.Input(shape=(2,))
+        decoder_output = layers.Dense(20, activation="relu")(decoder_input)
+        decoder_output = layers.Dense(100, activation="sigmoid")(decoder_output)
+
+        # Triplet loss.
+        tl = ngdlmodels.TL(base_input=base_model_input, base_output=base_model_output)
+        tl.summary()
+
+
+    def test_tl_sequential(self):
+
+        # Base model.
+        base_model = models.Sequential()
+        base_model.add(layers.Dense(20, activation="relu", input_shape=(100,)))
+
+        # Triplet loss.
+        tl = ngdlmodels.TL(base=base_model)
+        tl.summary()
+
     #def test_ae_save_load(self):
 
     #    # Encoder.
