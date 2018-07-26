@@ -15,42 +15,22 @@ class AE(Model):
 
     def __init__(
         self,
-        encoder=None, decoder=None,
-        encoder_input=None, encoder_output=None, decoder_input=None, decoder_output=None,
-        activation="relu"):
+        encoder=None, decoder=None):
         super(AE, self).__init__()
 
         # For calling this as a super-constructor.
-        parameters = [encoder, decoder, encoder_input, encoder_output, decoder_input, decoder_output]
+        parameters = [encoder, decoder]
         if all(v is None for v in parameters):
             return
 
-        # Check if it is either sequential or functional.
-        assert (encoder != None and decoder != None) or (encoder_input != None and encoder_output != None and decoder_input != None and decoder_output != None)
-
         # Sequential.
-        if encoder != None and decoder != None:
-            assert len(encoder.outputs) == 1
-            assert len(decoder.inputs) == 1
-            assert encoder.outputs[0].shape[1:] == decoder.inputs[0].shape[1:] , str(encoder.outputs[0].shape) + " " + str(decoder.inputs[0].shape)
-            self.latent_dim = encoder.outputs[0].shape[1]
+        assert len(encoder.outputs) == 1
+        assert len(decoder.inputs) == 1
+        assert encoder.outputs[0].shape[1:] == decoder.inputs[0].shape[1:] , str(encoder.outputs[0].shape) + " " + str(decoder.inputs[0].shape)
+        self.latent_dim = encoder.outputs[0].shape[1]
 
-            self.encoder = encoder
-            self.decoder = decoder
-
-        # Functional.
-        if encoder_input != None and encoder_output != None and decoder_input != None and decoder_output != None:
-            self.latent_dim = encoder_output.shape[1:]
-
-            # Creating the encoder.
-            self.encoder_input = encoder_input
-            self.encoder_output = encoder_output
-            self.encoder = Model(self.encoder_input, self.encoder_output, name="encoder")
-
-            # Creating the decoder.
-            self.decoder_input = decoder_input
-            self.decoder_output = decoder_output
-            self.decoder = Model(self.decoder_input, self.decoder_output, name="decoder")
+        self.encoder = encoder
+        self.decoder = decoder
 
         # Creating the AE.
         inputs = self.encoder.inputs[0]
@@ -162,43 +142,26 @@ class VAE(AE):
     def __init__(
         self,
         encoder=None, decoder=None,
-        encoder_input=None, encoder_output=None, decoder_input=None, decoder_output=None,
         latent_dim=None):
-        super(VAE, self).__init__(encoder=None, decoder=None, encoder_input=None, encoder_output=None, decoder_input=None, decoder_output=None)
+        super(VAE, self).__init__(encoder=None, decoder=None)
 
         # Check if it is either sequential or functional.
-        assert (encoder != None and decoder != None) or (encoder_input != None and encoder_output != None and decoder_input != None and decoder_output != None)
+        assert (encoder != None and decoder != None)
 
+        # Set the latent dimensions.
         assert latent_dim != None
         self.latent_dim = latent_dim
 
-        # Sequential.
-        if encoder != None and decoder != None:
+        # Encoder.
+        encoder_input = encoder.inputs[0]
+        encoder_output = encoder.outputs[0]
+        z_mean = layers.Dense(self.latent_dim, name='z_mean')(encoder_output)
+        z_log_var = layers.Dense(self.latent_dim, name='z_log_var')(encoder_output)
+        z =layers.Lambda(sampling, output_shape=(self.latent_dim,), name='z')([z_mean, z_log_var])
+        self.encoder = Model(encoder_input, [z_mean, z_log_var, z], name='encoder')
 
-            encoder_input = encoder.inputs[0]
-            encoder_output = encoder.outputs[0]
-            z_mean = layers.Dense(self.latent_dim, name='z_mean')(encoder_output)
-            z_log_var = layers.Dense(self.latent_dim, name='z_log_var')(encoder_output)
-            z =layers.Lambda(sampling, output_shape=(self.latent_dim,), name='z')([z_mean, z_log_var])
-            self.encoder = Model(encoder_input, [z_mean, z_log_var, z], name='encoder')
-
-            self.decoder = decoder
-
-        # Functional.
-        if encoder_input != None and encoder_output != None and decoder_input != None and decoder_output != None:
-
-            # Creating the encoder.
-            self.encoder_input = encoder_input
-            z_mean = layers.Dense(self.latent_dim, name='z_mean')(encoder_output)
-            z_log_var = layers.Dense(self.latent_dim, name='z_log_var')(encoder_output)
-            z =layers.Lambda(sampling, output_shape=(self.latent_dim,), name='z')([z_mean, z_log_var])
-            self.encoder_output = z
-            self.encoder = Model(encoder_input, [z_mean, z_log_var, z], name='encoder')
-
-            # Creating the decoder.
-            self.decoder_input = decoder_input
-            self.decoder_output = decoder_output
-            self.decoder = Model(self.decoder_input, self.decoder_output, name="decoder")
+        # Decoder.
+        self.decoder = decoder
 
         # Creating the VAE.
         inputs = self.encoder.inputs[0]
@@ -283,27 +246,21 @@ def sampling(args):
 
 class TL(Model):
 
-    def __init__(self, base=None, base_input=None, base_output=None):
+    def __init__(self, base=None):
         super(TL, self).__init__()
         print("Initializing TL")
 
-        assert (base != None) or (base_input != None and base_output != None)
+        # Store the base model.
+        assert (base != None)
+        self.base = base
 
-        if base != None:
-            self.base = base
-
-        # Creating the base-model.
-        if base_input != None and base_output != None:
-
-            self.latent_dim = base_output.shape[1]
-
-            self.base_input = base_input
-            self.base_output = base_output
-            self.base = Model(self.base_input, self.base_output, name="base_model")
+        # Get the latent dimension.
+        assert len(self.base.outputs) == 1
+        assert len(self.base.outputs[0].shape) == 2
+        self.latent_dim = self.base.outputs[0].shape[1]
 
         # Get the input shape.
         input_shape = self.base.inputs[0].shape.as_list()[1:]
-        print(input_shape)
 
         # Create the anchor.
         input_anchor = layers.Input(shape=input_shape)

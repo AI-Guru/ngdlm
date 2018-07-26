@@ -175,6 +175,7 @@ def _build_dense(type, input_shape, latent_dim, hidden_units=[], hidden_activati
     for hidden in hidden_units:
         encoder_output = layers.Dense(hidden, activation=hidden_activation)(encoder_output)
     encoder_output = layers.Dense(latent_dim, activation=hidden_activation)(encoder_output)
+    encoder = models.Model(encoder_input, encoder_output)
 
     # Create the decoder.
     decoder_input = layers.Input(shape=(latent_dim,))
@@ -183,11 +184,12 @@ def _build_dense(type, input_shape, latent_dim, hidden_units=[], hidden_activati
         decoder_output = layers.Dense(hidden, activation=hidden_activation)(decoder_output)
     decoder_output = layers.Dense(input_size, activation="sigmoid")(decoder_output)
     decoder_output = layers.Reshape(input_shape)(decoder_output)
+    decoder = models.Model(decoder_input, decoder_output)
 
     # Create the autoencoder.
     if type == "ae":
-        ae = ngdlmodels.AE(encoder_input, encoder_output, decoder_input, decoder_output, latent_dim=latent_dim)
+        ae = ngdlmodels.AE(encoder, decoder)
         return ae
     elif type == "vae":
-        vae = ngdlmodels.VAE(encoder_input, encoder_output, decoder_input, decoder_output, latent_dim=latent_dim)
+        vae = ngdlmodels.VAE(encoder, decoder, latent_dim=latent_dim)
         return vae

@@ -11,15 +11,15 @@ class TestModels(unittest.TestCase):
         encoder_input = layers.Input(shape=(100,))
         encoder_output = encoder_input
         encoder_output = layers.Dense(2, activation="relu")(encoder_output)
+        encoder = models.Model(encoder_input, encoder_output)
 
         # Decoder.
         decoder_input = layers.Input(shape=(2,))
         decoder_output = layers.Dense(100, activation="sigmoid")(decoder_input)
+        decoder = models.Model(decoder_input, decoder_output)
 
         # Autoencoder.
-        ae = ngdlmodels.AE(
-            encoder_input=encoder_input, encoder_output=encoder_output,
-            decoder_input=decoder_input, decoder_output=decoder_output)
+        ae = ngdlmodels.AE(encoder=encoder, decoder=decoder)
         ae.summary()
 
 
@@ -44,17 +44,16 @@ class TestModels(unittest.TestCase):
         encoder_input = layers.Input(shape=(100,))
         encoder_output = encoder_input
         encoder_output = layers.Dense(20, activation="relu")(encoder_output)
+        encoder = models.Model(encoder_input, encoder_output)
 
         # Decoder.
         decoder_input = layers.Input(shape=(2,))
         decoder_output = layers.Dense(20, activation="relu")(decoder_input)
         decoder_output = layers.Dense(100, activation="sigmoid")(decoder_output)
+        decoder = models.Model(decoder_input, decoder_output)
 
         # Variational Autoencoder.
-        vae = ngdlmodels.VAE(
-            encoder_input=encoder_input, encoder_output=encoder_output,
-            decoder_input=decoder_input, decoder_output=decoder_output,
-            latent_dim=2)
+        vae = ngdlmodels.VAE(encoder=encoder, decoder=decoder, latent_dim=2)
         vae.summary()
 
 
