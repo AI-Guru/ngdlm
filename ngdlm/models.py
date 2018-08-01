@@ -160,6 +160,7 @@ class TDLSTMAE(AE):
         # Check preconditions.
         assert len(encoder.outputs) == 1
         assert len(decoder.inputs) == 1
+        assert encoder.outputs[0].shape[2:] == decoder.inputs[0].shape[2:] , str(encoder.outputs[0].shape) + " " + str(decoder.inputs[0].shape)
         self.latent_dim = encoder.outputs[0].shape[1]
 
         # Getting the input-tensors and the LSTM-size.
