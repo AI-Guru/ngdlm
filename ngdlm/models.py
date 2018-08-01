@@ -260,16 +260,25 @@ class VAE(AE):
 
     def __init__(
         self,
-        encoder=None, decoder=None,
+        encoder=None, decoder=None, autoencoder=None,
         latent_dim=None):
         super(VAE, self).__init__(encoder=None, decoder=None)
 
         # Encoder and decoder must be provided.
         assert (encoder != None and decoder != None)
 
+        # From loading.
+        if encoder != None and decoder != None and autoencoder != None:
+            self.encoder = encoder
+            self.decoder = decoder
+            self.autoencoder = autoencoder
+            self.latent_dim = decoder.inputs[0].shape.as_list()[-1]
+            print(latent_dim)
+            return
+
         # Set the latent dimensions.
-        assert latent_dim != None
         self.latent_dim = latent_dim
+        assert self.latent_dim != None
 
         # Encoder.
         encoder_input = encoder.inputs[0]
@@ -704,3 +713,15 @@ def load_ae_model(path):
             layer.summary()
 
     return AE(encoder=model.layers[1], decoder=model.layers[2], autoencoder=model)
+
+
+def load_vae_model(path):
+    model = models.load_model(path)
+    model.summary()
+
+    for layer in model.layers:
+        print(type(layer))
+        if type(layer) is Model:
+            layer.summary()
+
+    return VAE(encoder=model.layers[1], decoder=model.layers[2], autoencoder=model)

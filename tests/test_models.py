@@ -106,7 +106,7 @@ class TestModels(unittest.TestCase):
         decoder = models.Model(decoder_input, decoder_output)
 
         # Autoencoder.
-        ae = ngdlmodels.AE(encoder, decoder)
+        ae = ngdlmodels.AE(encoder=encoder, decoder=decoder)
         self.assert_models_same(ae, ae)
 
         # Saving and loading.
@@ -130,12 +130,12 @@ class TestModels(unittest.TestCase):
         decoder = models.Model(decoder_input, decoder_output)
 
         # Autoencoder.
-        vae = ngdlmodels.VAE(encoder, decoder)
+        vae = ngdlmodels.VAE(encoder=encoder, decoder=decoder, latent_dim=2)
         self.assert_models_same(vae, vae)
 
         # Saving and loading.
         vae.save("test_vae")
-        loaded_vae = ngdlmodels.load_ae_model("test_vae")
+        loaded_vae = ngdlmodels.load_vae_model("test_vae")
 
         self.assert_models_same(vae, loaded_vae)
 
@@ -145,6 +145,11 @@ class TestModels(unittest.TestCase):
         assert type(model1) is type(model2)
 
         if type(model1) is ngdlmodels.AE  and type(model2) is ngdlmodels.AE:
+            assert self.are_weights_same(model1.encoder.get_weights(), model2.encoder.get_weights())
+            assert self.are_weights_same(model1.decoder.get_weights(), model2.decoder.get_weights())
+            assert self.are_weights_same(model1.autoencoder.get_weights(), model2.autoencoder.get_weights())
+        elif type(model1) is ngdlmodels.VAE  and type(model2) is ngdlmodels.VAE:
+            assert model1.latent_dim == model2.latent_dim
             assert self.are_weights_same(model1.encoder.get_weights(), model2.encoder.get_weights())
             assert self.are_weights_same(model1.decoder.get_weights(), model2.decoder.get_weights())
             assert self.are_weights_same(model1.autoencoder.get_weights(), model2.autoencoder.get_weights())
