@@ -211,13 +211,19 @@ class CAE(AE):
         lam = 1e-4,
         **kwargs):
 
-        assert loss == "mse", "Expected 'mse' as loss."
+        #assert loss == "mse", "Expected 'mse' as loss."
+
+        self.loss = loss
 
         def contractive_loss(y_pred, y_true):
 
-
-
-            mse = K.mean(K.square(y_true - y_pred), axis=1)
+            # Get the base_loss.
+            if isinstance(self.loss, str):
+                base_loss = losses.get(self.loss)
+            else:
+                base_loss = self.loss
+            base_loss = base_loss(y_pred, y_true)
+            #loss = K.mean(K.square(y_true - y_pred), axis=1)
 
             encoder_output = self.encoder.layers[-1]
 
@@ -229,7 +235,7 @@ class CAE(AE):
             # N_batch x N_hidden * N_hidden x 1 = N_batch x 1
             contractive = lam * K.sum(dh**2 * K.sum(W**2, axis=1), axis=1)
 
-            return mse + contractive
+            return base_loss + contractive
 
         # Compile model.
         loss = contractive_loss
