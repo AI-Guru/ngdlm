@@ -140,6 +140,30 @@ class TestModels(unittest.TestCase):
         self.assert_models_same(vae, loaded_vae)
 
 
+    def test_cae_save_load(self):
+
+        # Encoder.
+        encoder_input = layers.Input(shape=(100,))
+        encoder_output = encoder_input
+        encoder_output = layers.Dense(2, activation="relu")(encoder_output)
+        encoder = models.Model(encoder_input, encoder_output)
+
+        # Decoder.
+        decoder_input = layers.Input(shape=(2,))
+        decoder_output = layers.Dense(100, activation="sigmoid")(decoder_input)
+        decoder = models.Model(decoder_input, decoder_output)
+
+        # Autoencoder.
+        cae = ngdlmodels.CAE(encoder=encoder, decoder=decoder)
+        self.assert_models_same(cae, cae)
+
+        # Saving and loading.
+        cae.save("test_cae")
+        loaded_cae = ngdlmodels.load_cae_model("test_cae")
+
+        self.assert_models_same(cae, loaded_cae)
+
+
     def assert_models_same(self, model1, model2):
 
         assert type(model1) is type(model2)
