@@ -151,17 +151,62 @@ class TestModels(unittest.TestCase):
         else:
             return False
 
-    #def test_vae_save_load(self):
-    #    self.assertTrue(False, "Implement")
+
+    def test_ae_predictions(self):
+
+        # Encoder.
+        encoder = models.Sequential()
+        encoder.add(layers.Dense(2, activation="relu", input_shape=(100,)))
+
+        # Decoder.
+        decoder = models.Sequential()
+        decoder.add(layers.Dense(100, activation="sigmoid", input_shape=(2,)))
+
+        # Autoencoder.
+        ae = ngdlmodels.AE(encoder=encoder, decoder=decoder)
+        ae.summary()
+
+        prediction = ae.predict(np.random.random((1, 100)))
+        assert prediction.shape == (1, 100), "Unexpected shape " + str(prediction.shape)
+
+        prediction = ae.predict_reconstruct_from_samples(np.random.random((1, 100)))
+        assert prediction.shape == (1, 100), "Unexpected shape " + str(prediction.shape)
+
+        prediction = ae.predict_embed_samples_into_latent(np.random.random((1, 100)))
+        assert prediction.shape == (1, 2), "Unexpected shape " + str(prediction.shape)
+
+        prediction = ae.predict_reconstruct_from_latent(np.random.random((1, 2)))
+        assert prediction.shape == (1, 100), "Unexpected shape " + str(prediction.shape)
 
 
-    #def test_tl_save_load(self):
-    #    self.assertTrue(False, "Implement")
+    def test_vae_predictions(self):
+
+        # Encoder.
+        encoder = models.Sequential()
+        encoder.add(layers.Dense(20, activation="relu", input_shape=(100,)))
+
+        # Decoder.
+        decoder = models.Sequential()
+        decoder.add(layers.Dense(100, activation="sigmoid", input_shape=(2,)))
+
+        # Variational Autoencoder.
+        vae = ngdlmodels.VAE(encoder=encoder, decoder=decoder, latent_dim=2)
+        vae.summary()
+
+        prediction = vae.predict(np.random.random((1, 100)))
+        assert prediction.shape == (1, 100), "Unexpected shape " + str(prediction.shape)
+
+        prediction = vae.predict_reconstruct_from_samples(np.random.random((1, 100)))
+        assert prediction.shape == (1, 100), "Unexpected shape " + str(prediction.shape)
+
+        prediction = vae.predict_embed_samples_into_latent(np.random.random((1, 100)))
+        assert prediction.shape == (1, 2), "Unexpected shape " + str(prediction.shape)
+
+        prediction = vae.predict_reconstruct_from_latent(np.random.random((1, 2)))
+        assert prediction.shape == (1, 100), "Unexpected shape " + str(prediction.shape)
 
 
 if __name__ == '__main__':
-    #logging.basicConfig( stream=sys.stderr )
-    #logging.getLogger( "SomeTest.testSomething" ).setLevel( logging.DEBUG )
-    #unittest.main()
-
-    TestModels().test_ae_save_load()
+    logging.basicConfig( stream=sys.stderr )
+    logging.getLogger( "SomeTest.testSomething" ).setLevel( logging.DEBUG )
+    unittest.main()

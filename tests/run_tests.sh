@@ -1,1 +1,3 @@
-python -m unittest discover -t
+# /usr/bin/sh
+
+python -m unittest discover -t ..
