@@ -23,6 +23,8 @@ class TestModels(unittest.TestCase):
         # Autoencoder.
         ae = ngdlmodels.AE(encoder=encoder, decoder=decoder)
 
+        self.assert_load_save_fine(ae)
+
 
     def test_ae_sequential(self):
 
@@ -36,6 +38,8 @@ class TestModels(unittest.TestCase):
 
         # Autoencoder.
         ae = ngdlmodels.AE(encoder=encoder, decoder=decoder)
+
+        self.assert_load_save_fine(ae)
 
 
     def test_vae_functional(self):
@@ -55,6 +59,8 @@ class TestModels(unittest.TestCase):
         # Variational Autoencoder.
         vae = ngdlmodels.VAE(encoder=encoder, decoder=decoder, latent_dim=2)
 
+        self.assert_load_save_fine(vae)
+
 
     def test_vae_sequential(self):
 
@@ -69,6 +75,66 @@ class TestModels(unittest.TestCase):
         # Variational Autoencoder.
         vae = ngdlmodels.VAE(encoder=encoder, decoder=decoder, latent_dim=2)
 
+        self.assert_load_save_fine(vae)
+
+
+    def test_time_distributed_ae(self):
+
+        # Encoder.
+        encoder_input = layers.Input((None, 1024))
+        encoder_output = encoder_input
+        encoder_output = layers.Dense(128)(encoder_output)
+        encoder_output = layers.Dense(64)(encoder_output)
+        encoder = models.Model(inputs=encoder_input, outputs=encoder_output)
+
+        # Decoder.
+        decoder_input = layers.Input((None, 64))
+        decoder_output = decoder_input
+        decoder_output = layers.Dense(128)(decoder_output)
+        decoder_output = layers.Dense(1024)(decoder_output)
+        decoder = models.Model(inputs=decoder_input, outputs=decoder_output)
+
+        # Autoencoder.
+        tdlstmae = ngdlmodels.TDLSTMAE(encoder=encoder, decoder=decoder)
+        tdlstmae.compile(loss="mse", optimizer="adam")
+
+        # Train model.
+        x_train = np.ones((10, 100, 1024))
+        y_train = np.zeros((10, 100, 1024))
+        history = tdlstmae.fit(
+            x_train, y_train,
+            epochs=1,
+            batch_size=16
+            )
+
+        self.assert_load_save_fine(tdlstmae)
+
+
+    def test_cae(self):
+
+        # Encoder.
+        encoder = models.Sequential()
+        encoder.add(layers.Dense(2, activation="relu", input_shape=(100,)))
+
+        # Decoder.
+        decoder = models.Sequential()
+        decoder.add(layers.Dense(100, activation="sigmoid", input_shape=(2,)))
+
+        # Autoencoder.
+        cae = ngdlmodels.CAE(encoder=encoder, decoder=decoder)
+        cae.compile(loss="mse", optimizer="adam")
+
+        # Train model.
+        x_train = np.ones((10, 100))
+        y_train = np.zeros((10, 100))
+        history = cae.fit(
+            x_train, y_train,
+            epochs=1,
+            batch_size=16
+            )
+
+        self.assert_load_save_fine(cae)
+
 
     def test_tl_functional(self):
 
@@ -81,6 +147,8 @@ class TestModels(unittest.TestCase):
         # Triplet loss.
         tl = ngdlmodels.TL(base)
 
+        self.assert_load_save_fine(tl)
+
 
     def test_tl_sequential(self):
 
@@ -91,77 +159,23 @@ class TestModels(unittest.TestCase):
         # Triplet loss.
         tl = ngdlmodels.TL(base=base_model)
 
-
-    def test_ae_save_load(self):
-
-        # Encoder.
-        encoder_input = layers.Input(shape=(100,))
-        encoder_output = encoder_input
-        encoder_output = layers.Dense(2, activation="relu")(encoder_output)
-        encoder = models.Model(encoder_input, encoder_output)
-
-        # Decoder.
-        decoder_input = layers.Input(shape=(2,))
-        decoder_output = layers.Dense(100, activation="sigmoid")(decoder_input)
-        decoder = models.Model(decoder_input, decoder_output)
-
-        # Autoencoder.
-        ae = ngdlmodels.AE(encoder=encoder, decoder=decoder)
-        self.assert_models_same(ae, ae)
-
-        # Saving and loading.
-        ae.save("test_ae")
-        loaded_ae = ngdlmodels.load_ae_model("test_ae")
-
-        self.assert_models_same(ae, loaded_ae)
+        self.assert_load_save_fine(tl)
 
 
-    def test_vae_save_load(self):
+    def assert_load_save_fine(self, model):
 
-        # Encoder.
-        encoder_input = layers.Input(shape=(100,))
-        encoder_output = encoder_input
-        encoder_output = layers.Dense(2, activation="relu")(encoder_output)
-        encoder = models.Model(encoder_input, encoder_output)
+        # Model should be the same as itself.
+        self.assert_models_same(model, model)
 
-        # Decoder.
-        decoder_input = layers.Input(shape=(2,))
-        decoder_output = layers.Dense(100, activation="sigmoid")(decoder_input)
-        decoder = models.Model(decoder_input, decoder_output)
+        # Save the model.
+        model.save("test_save")
 
-        # Autoencoder.
-        vae = ngdlmodels.VAE(encoder=encoder, decoder=decoder, latent_dim=2)
-        self.assert_models_same(vae, vae)
+        # Load the model.
+        loaded_model = ngdlmodels.load_model("test_save", type(model))
 
-        # Saving and loading.
-        vae.save("test_vae")
-        loaded_vae = ngdlmodels.load_vae_model("test_vae")
+        # Loaded model should be the same as original model.
+        self.assert_models_same(model, loaded_model)
 
-        self.assert_models_same(vae, loaded_vae)
-
-
-    def test_cae_save_load(self):
-
-        # Encoder.
-        encoder_input = layers.Input(shape=(100,))
-        encoder_output = encoder_input
-        encoder_output = layers.Dense(2, activation="relu")(encoder_output)
-        encoder = models.Model(encoder_input, encoder_output)
-
-        # Decoder.
-        decoder_input = layers.Input(shape=(2,))
-        decoder_output = layers.Dense(100, activation="sigmoid")(decoder_input)
-        decoder = models.Model(decoder_input, decoder_output)
-
-        # Autoencoder.
-        cae = ngdlmodels.CAE(encoder=encoder, decoder=decoder)
-        self.assert_models_same(cae, cae)
-
-        # Saving and loading.
-        cae.save("test_cae")
-        loaded_cae = ngdlmodels.load_cae_model("test_cae")
-
-        self.assert_models_same(cae, loaded_cae)
 
 
     def assert_models_same(self, model1, model2):
@@ -177,8 +191,21 @@ class TestModels(unittest.TestCase):
             assert self.are_weights_same(model1.encoder.get_weights(), model2.encoder.get_weights())
             assert self.are_weights_same(model1.decoder.get_weights(), model2.decoder.get_weights())
             assert self.are_weights_same(model1.autoencoder.get_weights(), model2.autoencoder.get_weights())
+        elif type(model1) is ngdlmodels.CAE  and type(model2) is ngdlmodels.CAE:
+            assert self.are_weights_same(model1.encoder.get_weights(), model2.encoder.get_weights())
+            assert self.are_weights_same(model1.decoder.get_weights(), model2.decoder.get_weights())
+            assert self.are_weights_same(model1.autoencoder.get_weights(), model2.autoencoder.get_weights())
+        elif type(model1) is ngdlmodels.TDLSTMAE  and type(model2) is ngdlmodels.TDLSTMAE:
+            assert self.are_weights_same(model1.encoder.get_weights(), model2.encoder.get_weights())
+            assert self.are_weights_same(model1.decoder.get_weights(), model2.decoder.get_weights())
+            assert self.are_weights_same(model1.autoencoder.get_weights(), model2.autoencoder.get_weights())
+        elif type(model1) is ngdlmodels.TL  and type(model2) is ngdlmodels.TL:
+            assert model1.latent_dim == model2.latent_dim
+            assert self.are_weights_same(model1.base.get_weights(), model2.base.get_weights())
+            assert self.are_weights_same(model1.siamese.get_weights(), model2.siamese.get_weights())
         else:
-            raise Exception("Unexpected: " + type(model1) + " " + type(model2))
+            raise Exception("Unexpected: " + str(type(model1)) + " " + str(type(model2)))
+
 
     def are_weights_same(self, e1, e2):
 

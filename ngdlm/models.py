@@ -162,11 +162,18 @@ class TDLSTMAE(AE):
 
     def __init__(
         self,
-        encoder=None, decoder=None):
+        encoder=None, decoder=None, autoencoder=None):
         super(TDLSTMAE, self).__init__(encoder=None, decoder=None)
 
         # Encoder and decoder must be provided.
         assert (encoder != None and decoder != None)
+
+        # From loading.
+        if encoder != None and decoder != None and autoencoder != None:
+            self.encoder = encoder
+            self.decoder = decoder
+            self.autoencoder = autoencoder
+            return
 
         # Check preconditions.
         assert len(encoder.outputs) == 1
@@ -209,8 +216,8 @@ class CAE(AE):
 
     def __init__(
         self,
-        encoder=None, decoder=None):
-        super(CAE, self).__init__(encoder=encoder, decoder=decoder)
+        encoder=None, decoder=None, autoencoder=None):
+        super(CAE, self).__init__(encoder=encoder, decoder=decoder, autoencoder=autoencoder)
 
 
     def compile(
@@ -379,13 +386,19 @@ def sampling(args):
 
 class TL(Model):
 
-    def __init__(self, base=None):
+    def __init__(self, base=None, siamese=None):
         super(TL, self).__init__()
-        print("Initializing TL")
 
         # Store the base model.
         assert (base != None)
         self.base = base
+
+        # For loading.
+        if base != None and siamese != None:
+            self.base = base
+            self.siamese = siamese
+            self.latent_dim = self.base.outputs[0].shape[1]
+            return
 
         # Get the latent dimension.
         assert len(self.base.outputs) == 1
@@ -651,6 +664,9 @@ class TL(Model):
         self.siamese.summary()
 
 
+    def save(self, path):
+        self.siamese.save(path)
+
 
 class TLAE(Model):
 
@@ -704,24 +720,39 @@ def compute_latent_distance(latent_sample1, latent_sample2, norm):
 
 
 def load_ae_model(path):
-    model = models.load_model(path)
-    model.summary()
+    return load_model(path, AE)
 
-    for layer in model.layers:
-        print(type(layer))
-        if type(layer) is Model:
-            layer.summary()
 
-    return AE(encoder=model.layers[1], decoder=model.layers[2], autoencoder=model)
+def load_cae_model(path):
+    return load_model(path, CAE)
+
+
+def load_tdlstmae_model(path):
+    return load_model(path, TDLSTMAE)
 
 
 def load_vae_model(path):
+    return load_model(path, VAE)
+
+
+def load_tl_model(path):
+    return load_model(path, TL)
+
+
+def load_model(path, model_type):
     model = models.load_model(path)
-    model.summary()
 
-    for layer in model.layers:
-        print(type(layer))
-        if type(layer) is Model:
-            layer.summary()
-
-    return VAE(encoder=model.layers[1], decoder=model.layers[2], autoencoder=model)
+    if model_type is AE:
+        return AE(encoder=model.layers[1], decoder=model.layers[2], autoencoder=model)
+    elif model_type is CAE:
+        return CAE(encoder=model.layers[1], decoder=model.layers[2], autoencoder=model)
+    elif model_type is TDLSTMAE:
+        return TDLSTMAE(encoder=model.layers[1], decoder=model.layers[2], autoencoder=model)
+    elif model_type is VAE:
+        return VAE(encoder=model.layers[1], decoder=model.layers[2], autoencoder=model)
+    elif model_type is TL:
+        return TL(base=model.layers[3], siamese=model)
+    else:
+        for layer in model.layers:
+            print(type(layer))
+        raise Exception("Unexpected type: " + str(type))
