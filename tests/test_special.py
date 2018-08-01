@@ -26,11 +26,37 @@ class TestSpecial(unittest.TestCase):
         # Autoencoder.
         tdlstmae = ngdlmodels.TDLSTMAE(encoder=encoder, decoder=decoder)
         tdlstmae.compile(loss="mse", optimizer="adam")
+        tdlstmae.summary()
 
         # Train model.
         x_train = np.ones((10, 100, 1024))
         y_train = np.zeros((10, 100, 1024))
         history = tdlstmae.fit(
+            x_train, y_train,
+            epochs=1,
+            batch_size=16
+            )
+
+
+    def test_cae(self):
+
+        # Encoder.
+        encoder = models.Sequential()
+        encoder.add(layers.Dense(2, activation="relu", input_shape=(100,)))
+
+        # Decoder.
+        decoder = models.Sequential()
+        decoder.add(layers.Dense(100, activation="sigmoid", input_shape=(2,)))
+
+        # Autoencoder.
+        cae = ngdlmodels.CAE(encoder=encoder, decoder=decoder)
+        cae.compile(loss="mse", optimizer="adam")
+        cae.summary()
+
+        # Train model.
+        x_train = np.ones((10, 100))
+        y_train = np.zeros((10, 100))
+        history = cae.fit(
             x_train, y_train,
             epochs=1,
             batch_size=16

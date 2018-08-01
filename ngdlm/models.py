@@ -189,6 +189,52 @@ class TDLSTMAE(AE):
         self.model = autoencoder = Model(inputs=autoencoder_input, outputs=autoencoder_output)
 
 
+class CAE(AE):
+    """ Contractive Autoencoder. This is a autoencoder consisting of an encoder and a decoder. It has a special loss. """
+
+
+    def __init__(
+        self,
+        encoder=None, decoder=None):
+        super(CAE, self).__init__(encoder=encoder, decoder=decoder)
+
+
+    def compile(
+        self,
+        optimizer,
+        loss=None,
+        metrics=None,
+        loss_weights=None,
+        sample_weight_mode=None,
+        weighted_metrics=None,
+        target_tensors=None,
+        lam = 1e-4,
+        **kwargs):
+
+        assert loss == "mse", "Expected 'mse' as loss."
+
+        def contractive_loss(y_pred, y_true):
+
+
+
+            mse = K.mean(K.square(y_true - y_pred), axis=1)
+
+            encoder_output = self.encoder.layers[-1]
+
+            W = K.variable(value=encoder_output.get_weights()[0])  # N x N_hidden
+            W = K.transpose(W)  # N_hidden x N
+            h = encoder_output.output
+            dh = h * (1 - h)  # N_batch x N_hidden
+
+            # N_batch x N_hidden * N_hidden x 1 = N_batch x 1
+            contractive = lam * K.sum(dh**2 * K.sum(W**2, axis=1), axis=1)
+
+            return mse + contractive
+
+        # Compile model.
+        loss = contractive_loss
+        self.model.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
+
 
 class VAE(AE):
     """ Variational Autoencoder. This consists of an encoder and a decoder plus an interpolateable latent space. """
