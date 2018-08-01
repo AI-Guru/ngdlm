@@ -3,7 +3,7 @@ This module contains all next generation deep learning models.
 """
 
 from keras.engine.training import Model
-from keras import layers, optimizers, losses
+from keras import models, layers, optimizers, losses
 from keras import backend as K
 import numpy as np
 import random
@@ -15,12 +15,19 @@ class AE(Model):
 
     def __init__(
         self,
-        encoder=None, decoder=None):
+        encoder=None, decoder=None, autoencoder=None):
         super(AE, self).__init__()
 
         # For calling this as a super-constructor.
         parameters = [encoder, decoder]
         if all(v is None for v in parameters):
+            return
+
+        # From loading.
+        if encoder != None and decoder != None and autoencoder != None:
+            self.encoder = encoder
+            self.decoder = decoder
+            self.autoencoder = autoencoder
             return
 
         # Check preconditions.
@@ -35,7 +42,7 @@ class AE(Model):
         # Creating the AE.
         inputs = self.encoder.inputs[0]
         outputs = self.decoder(self.encoder(inputs))
-        self.model = Model(inputs, outputs, name='ae')
+        self.autoencoder = Model(inputs, outputs, name='ae')
 
 
     def compile(
@@ -51,7 +58,7 @@ class AE(Model):
 
         assert "reconstruction_loss" not in kwargs, "Not expected to use reconstruction_loss in AE."
 
-        self.model.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
+        self.autoencoder.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
 
 
     def fit(
@@ -72,7 +79,7 @@ class AE(Model):
         validation_steps=None,
         **kwargs):
 
-        return self.model.fit(x, y, batch_size, epochs, verbose, callbacks, validation_split, validation_data, shuffle, class_weight, sample_weight, initial_epoch, steps_per_epoch, validation_steps, **kwargs)
+        return self.autoencoder.fit(x, y, batch_size, epochs, verbose, callbacks, validation_split, validation_data, shuffle, class_weight, sample_weight, initial_epoch, steps_per_epoch, validation_steps, **kwargs)
 
 
     def fit_generator(
@@ -92,7 +99,7 @@ class AE(Model):
         initial_epoch=0):
 
         #return self.model.fit_generator(generator, steps_per_epoch, epochs, verbose, callbacks, validation_data, validation_steps, class_weight, max_queue_size, workers, use_multiprocessing, shuffle, initial_epoch)
-        return self.model.fit_generator(
+        return self.autoencoder.fit_generator(
             generator, steps_per_epoch, epochs,
             verbose=verbose,
             callbacks=callbacks,
@@ -115,7 +122,7 @@ class AE(Model):
         sample_weight=None,
         steps=None):
 
-        return self.model.evaluate(x, y, batch_size, verbose, sample_weight, steps=None)
+        return self.autoencoder.evaluate(x, y, batch_size, verbose, sample_weight, steps=None)
 
 
     def predict(self, x, batch_size=None, verbose=0, steps=None):
@@ -125,7 +132,7 @@ class AE(Model):
 
     def predict_reconstruct_from_samples(self, x, batch_size=None, verbose=0, steps=None):
 
-        return self.model.predict(x, batch_size, verbose, steps)
+        return self.autoencoder.predict(x, batch_size, verbose, steps)
 
 
     def predict_embed_samples_into_latent(self, x, batch_size=None, verbose=0, steps=None):
@@ -141,7 +148,11 @@ class AE(Model):
     def summary(self):
         self.encoder.summary()
         self.decoder.summary()
-        self.model.summary()
+        self.autoencoder.summary()
+
+
+    def save(self, path):
+        self.autoencoder.save(path)
 
 
 
@@ -186,11 +197,14 @@ class TDLSTMAE(AE):
         autoencoder_output = autoencoder_input
         autoencoder_output = time_distributed_encoder(autoencoder_output)
         autoencoder_output = time_distributed_decoder(autoencoder_output)
-        self.model = autoencoder = Model(inputs=autoencoder_input, outputs=autoencoder_output)
+        self.autoencoder = Model(inputs=autoencoder_input, outputs=autoencoder_output)
 
 
 class CAE(AE):
-    """ Contractive Autoencoder. This is a autoencoder consisting of an encoder and a decoder. It has a special loss. """
+    """
+    Contractive Autoencoder. This is a autoencoder consisting of an encoder and a decoder. It has a special loss.
+    http://www.icml-2011.org/papers/455_icmlpaper.pdf
+    """
 
 
     def __init__(
@@ -225,21 +239,19 @@ class CAE(AE):
             base_loss = base_loss(y_pred, y_true)
             #loss = K.mean(K.square(y_true - y_pred), axis=1)
 
+            # Get the contractive loss.
             encoder_output = self.encoder.layers[-1]
-
-            W = K.variable(value=encoder_output.get_weights()[0])  # N x N_hidden
-            W = K.transpose(W)  # N_hidden x N
+            weigths = K.variable(value=encoder_output.get_weights()[0])
+            weigths = K.transpose(weigths)  # N_hidden x N
             h = encoder_output.output
-            dh = h * (1 - h)  # N_batch x N_hidden
-
-            # N_batch x N_hidden * N_hidden x 1 = N_batch x 1
-            contractive = lam * K.sum(dh**2 * K.sum(W**2, axis=1), axis=1)
+            dh = h * (1 - h)
+            contractive = lam * K.sum(dh**2 * K.sum(weigths**2, axis=1), axis=1)
 
             return base_loss + contractive
 
         # Compile model.
         loss = contractive_loss
-        self.model.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
+        self.autoencoder.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
 
 
 class VAE(AE):
@@ -273,7 +285,7 @@ class VAE(AE):
         # Creating the VAE.
         inputs = self.encoder.inputs[0]
         outputs = self.decoder(self.encoder(inputs)[2]) # This is z.
-        self.model = Model(inputs, outputs, name="vae")
+        self.autoencoder = Model(inputs, outputs, name="vae")
 
 
     def compile(
@@ -329,7 +341,7 @@ class VAE(AE):
 
         # Compile model.
         loss = vae_loss
-        self.model.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
+        self.autoencoder.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
 
 
     def predict_embed_samples_into_latent(self, x, batch_size=None, verbose=0, steps=None):
@@ -393,7 +405,7 @@ class TL(Model):
         output = layers.concatenate([output_anchor, output_positive, output_negative])
 
         # Create the model.
-        self.model = Model([input_anchor, input_positive, input_negative], output, name="triplet_model")
+        self.siamese = Model([input_anchor, input_positive, input_negative], output, name="triplet_model")
 
 
     def compile(
@@ -433,7 +445,7 @@ class TL(Model):
 
         loss = triplet_loss_function
 
-        self.model.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
+        self.siamese.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
 
 
     def fit(
@@ -539,9 +551,9 @@ class TL(Model):
                 yield x_input, y_dummy
 
         # Create the generators.
-        training_generator = triplet_loss_generator(x, y, batch_size, self.model)
+        training_generator = triplet_loss_generator(x, y, batch_size, self.siamese)
         if validation_data != None:
-            validation_generator = triplet_loss_generator(validation_data[0], validation_data[1], batch_size, self.model)
+            validation_generator = triplet_loss_generator(validation_data[0], validation_data[1], batch_size, self.siamese)
         else:
             validation_generator = None
 
@@ -562,7 +574,7 @@ class TL(Model):
             if validation_generator != None:
                 validation_input, validation_output = next(validation_generator)
 
-            model_history = self.model.fit(
+            model_history = self.siamese.fit(
                 training_input, training_output,
                 validation_data=(validation_input, validation_output),
                 epochs=1,
@@ -600,7 +612,7 @@ class TL(Model):
 
         raise Exception("Not implemented!")
 
-        return self.model.fit_generator(generator, steps_per_epoch, epochs, verbose, callbacks, validation_data, validation_steps, class_weight, max_queue_size, workers, use_multiprocessing, shuffle, initial_epoch)
+        return self.siamese.fit_generator(generator, steps_per_epoch, epochs, verbose, callbacks, validation_data, validation_steps, class_weight, max_queue_size, workers, use_multiprocessing, shuffle, initial_epoch)
 
 
     def evaluate(
@@ -612,7 +624,7 @@ class TL(Model):
         sample_weight=None,
         steps=None):
 
-        return self.model.evaluate(x, y, batch_size, verbose, sample_weight, steps=None)
+        return self.siamese.evaluate(x, y, batch_size, verbose, sample_weight, steps=None)
 
 
     def predict(
@@ -622,12 +634,12 @@ class TL(Model):
         verbose=0,
         steps=None):
 
-        return self.model.predict(x, batch_size, verbose, steps)
+        return self.siamese.predict(x, batch_size, verbose, steps)
 
 
     def summary(self):
         self.base.summary()
-        self.model.summary()
+        self.siamese.summary()
 
 
 
@@ -679,3 +691,16 @@ def compute_latent_distance(latent_sample1, latent_sample2, norm):
     #    return distance
     else:
         raise Exception("Unexpected norm: " + norm)
+
+
+
+def load_ae_model(path):
+    model = models.load_model(path)
+    model.summary()
+
+    for layer in model.layers:
+        print(type(layer))
+        if type(layer) is Model:
+            layer.summary()
+
+    return AE(encoder=model.layers[1], decoder=model.layers[2], autoencoder=model)

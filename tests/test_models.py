@@ -22,7 +22,6 @@ class TestModels(unittest.TestCase):
 
         # Autoencoder.
         ae = ngdlmodels.AE(encoder=encoder, decoder=decoder)
-        ae.summary()
 
 
     def test_ae_sequential(self):
@@ -37,7 +36,6 @@ class TestModels(unittest.TestCase):
 
         # Autoencoder.
         ae = ngdlmodels.AE(encoder=encoder, decoder=decoder)
-        ae.summary()
 
 
     def test_vae_functional(self):
@@ -56,7 +54,6 @@ class TestModels(unittest.TestCase):
 
         # Variational Autoencoder.
         vae = ngdlmodels.VAE(encoder=encoder, decoder=decoder, latent_dim=2)
-        vae.summary()
 
 
     def test_vae_sequential(self):
@@ -71,7 +68,6 @@ class TestModels(unittest.TestCase):
 
         # Variational Autoencoder.
         vae = ngdlmodels.VAE(encoder=encoder, decoder=decoder, latent_dim=2)
-        vae.summary()
 
 
     def test_tl_functional(self):
@@ -84,7 +80,6 @@ class TestModels(unittest.TestCase):
 
         # Triplet loss.
         tl = ngdlmodels.TL(base)
-        tl.summary()
 
 
     def test_tl_sequential(self):
@@ -95,7 +90,6 @@ class TestModels(unittest.TestCase):
 
         # Triplet loss.
         tl = ngdlmodels.TL(base=base_model)
-        tl.summary()
 
 
     def test_ae_save_load(self):
@@ -113,25 +107,26 @@ class TestModels(unittest.TestCase):
 
         # Autoencoder.
         ae = ngdlmodels.AE(encoder, decoder)
-        self.assertTrue(self.are_models_same(ae, ae))
+        self.assert_models_same(ae, ae)
 
         # Saving and loading.
-        ngdlmodels.save_model(ae, "test_ae")
+        ae.save("test_ae")
         loaded_ae = ngdlmodels.load_ae_model("test_ae")
 
-        self.assertTrue(self.are_models_same(ae, loaded_ae))
+        self.assert_models_same(ae, loaded_ae)
 
 
-    def are_models_same(self, model1, model2):
+    def assert_models_same(self, model1, model2):
 
-        log= logging.getLogger( "SomeTest.testSomething" )
-        weights1 = model1.model.get_weights()
-        weights2 = model2.model.get_weights()
+        assert type(model1) is type(model2)
 
-        return self.my_are_same(weights1, weights2)
+        if type(model1) is ngdlmodels.AE  and type(model2) is ngdlmodels.AE:
+            assert self.are_weights_same(model1.encoder.get_weights(), model2.encoder.get_weights())
+            assert self.are_weights_same(model1.decoder.get_weights(), model2.decoder.get_weights())
+            assert self.are_weights_same(model1.autoencoder.get_weights(), model2.autoencoder.get_weights())
 
 
-    def my_are_same(self, e1, e2):
+    def are_weights_same(self, e1, e2):
 
         if type(e1) == list and type(e1) == list:
             all_same = True
@@ -140,7 +135,7 @@ class TestModels(unittest.TestCase):
                 return False
 
             for x1, x2 in zip(e1, e2):
-                if self.my_are_same(x1, x2) == False:
+                if self.are_weights_same(x1, x2) == False:
                     all_same == False
                     break
             return all_same
@@ -164,7 +159,6 @@ class TestModels(unittest.TestCase):
 
         # Autoencoder.
         ae = ngdlmodels.AE(encoder=encoder, decoder=decoder)
-        ae.summary()
 
         prediction = ae.predict(np.random.random((1, 100)))
         assert prediction.shape == (1, 100), "Unexpected shape " + str(prediction.shape)
@@ -191,7 +185,6 @@ class TestModels(unittest.TestCase):
 
         # Variational Autoencoder.
         vae = ngdlmodels.VAE(encoder=encoder, decoder=decoder, latent_dim=2)
-        vae.summary()
 
         prediction = vae.predict(np.random.random((1, 100)))
         assert prediction.shape == (1, 100), "Unexpected shape " + str(prediction.shape)

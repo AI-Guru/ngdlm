@@ -26,7 +26,6 @@ class TestSpecial(unittest.TestCase):
         # Autoencoder.
         tdlstmae = ngdlmodels.TDLSTMAE(encoder=encoder, decoder=decoder)
         tdlstmae.compile(loss="mse", optimizer="adam")
-        tdlstmae.summary()
 
         # Train model.
         x_train = np.ones((10, 100, 1024))
@@ -51,7 +50,6 @@ class TestSpecial(unittest.TestCase):
         # Autoencoder.
         cae = ngdlmodels.CAE(encoder=encoder, decoder=decoder)
         cae.compile(loss="mse", optimizer="adam")
-        cae.summary()
 
         # Train model.
         x_train = np.ones((10, 100))
