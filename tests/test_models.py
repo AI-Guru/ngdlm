@@ -116,6 +116,30 @@ class TestModels(unittest.TestCase):
         self.assert_models_same(ae, loaded_ae)
 
 
+    def test_vae_save_load(self):
+
+        # Encoder.
+        encoder_input = layers.Input(shape=(100,))
+        encoder_output = encoder_input
+        encoder_output = layers.Dense(2, activation="relu")(encoder_output)
+        encoder = models.Model(encoder_input, encoder_output)
+
+        # Decoder.
+        decoder_input = layers.Input(shape=(2,))
+        decoder_output = layers.Dense(100, activation="sigmoid")(decoder_input)
+        decoder = models.Model(decoder_input, decoder_output)
+
+        # Autoencoder.
+        vae = ngdlmodels.VAE(encoder, decoder)
+        self.assert_models_same(vae, vae)
+
+        # Saving and loading.
+        vae.save("test_vae")
+        loaded_vae = ngdlmodels.load_ae_model("test_vae")
+
+        self.assert_models_same(vae, loaded_vae)
+
+
     def assert_models_same(self, model1, model2):
 
         assert type(model1) is type(model2)
@@ -124,7 +148,8 @@ class TestModels(unittest.TestCase):
             assert self.are_weights_same(model1.encoder.get_weights(), model2.encoder.get_weights())
             assert self.are_weights_same(model1.decoder.get_weights(), model2.decoder.get_weights())
             assert self.are_weights_same(model1.autoencoder.get_weights(), model2.autoencoder.get_weights())
-
+        else:
+            raise Exception("Unexpected: " + type(model1) + " " + type(model2))
 
     def are_weights_same(self, e1, e2):
 
