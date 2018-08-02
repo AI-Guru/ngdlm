@@ -7,7 +7,7 @@ from keras import models, layers, optimizers, losses
 from keras import backend as K
 import numpy as np
 import random
-
+import os
 
 class AE(Model):
     """ Autoencoder. This is a simple autoencoder consisting of an encoder and a decoder."""
@@ -153,6 +153,8 @@ class AE(Model):
 
     def save(self, path):
         self.autoencoder.save(path)
+        self.encoder.save(append_to_filepath(path, "-encoder"))
+        self.decoder.save(append_to_filepath(path, "-decoder"))
 
 
 
@@ -666,6 +668,8 @@ class TL(Model):
 
     def save(self, path):
         self.siamese.save(path)
+        self.base.save(append_to_filepath(path, "-base"))
+
 
 
 class TLAE(Model):
@@ -756,3 +760,9 @@ def load_model(path, model_type):
         for layer in model.layers:
             print(type(layer))
         raise Exception("Unexpected type: " + str(type))
+
+
+def append_to_filepath(filepath, string):
+
+    filepath, extension = os.path.splitext(filepath)
+    return filepath + string + extension

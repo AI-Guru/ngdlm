@@ -3,6 +3,9 @@ from ngdlm import models as ngdlmodels
 from keras import models, layers
 import logging
 import numpy as np
+import glob
+import os
+
 
 class TestModels(unittest.TestCase):
 
@@ -167,11 +170,22 @@ class TestModels(unittest.TestCase):
         # Model should be the same as itself.
         self.assert_models_same(model, model)
 
+        # Path for the model.
+        mapping = {
+            ngdlmodels.AE: "ae",
+            ngdlmodels.VAE: "vae",
+            ngdlmodels.CAE: "cae",
+            ngdlmodels.TDLSTMAE: "tdlstmae",
+            ngdlmodels.TL: "tl",
+
+        }
+        model_path = "unittest-" + mapping[type(model)] + ".h5"
+
         # Save the model.
-        model.save("test_save")
+        model.save(model_path)
 
         # Load the model.
-        loaded_model = ngdlmodels.load_model("test_save", type(model))
+        loaded_model = ngdlmodels.load_model(model_path, type(model))
 
         # Loaded model should be the same as original model.
         self.assert_models_same(model, loaded_model)
@@ -278,6 +292,13 @@ class TestModels(unittest.TestCase):
 
         prediction = vae.predict_reconstruct_from_latent(np.random.random((1, 2)))
         assert prediction.shape == (1, 100), "Unexpected shape " + str(prediction.shape)
+
+
+    def tearDown(self):
+        files_to_delete = glob.glob("unittest*")
+        for file in files_to_delete:
+            os.remove(file)
+
 
 
 if __name__ == '__main__':
