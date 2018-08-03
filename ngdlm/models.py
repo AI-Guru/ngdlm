@@ -283,7 +283,6 @@ class VAE(AE):
             self.decoder = decoder
             self.autoencoder = autoencoder
             self.latent_dim = decoder.inputs[0].shape.as_list()[-1]
-            print(latent_dim)
             return
 
         # Set the latent dimensions.
@@ -687,7 +686,7 @@ class TLVAE(Model):
 
 
 class GAN(Model):
-    """ General Adversarial Network (GAN). """
+    """ Generative Adversarial Network (GAN). """
 
     def __init__(self, generator, discriminator):
         super(GAN, self).__init__()
