@@ -9,7 +9,7 @@ from keras import models, layers
 from PIL import Image
 
 
-def render_history(history, zero_limit=False):
+def render_history(history, zero_limit=False, show=True, figure_path=None):
     """
     Renders a training history.
 
@@ -33,11 +33,14 @@ def render_history(history, zero_limit=False):
     if zero_limit == True:
         plt.ylim(ymin=0.0)
     plt.legend()
-    plt.show()
+    if show == True:
+        plt.show()
+    if figure_path != None:
+        plt.savefig(figure_path)
     plt.close()
 
 
-def render_image_reconstructions(model, x_input, cmap="gray", image_size=None):
+def render_image_reconstructions(model, x_input, cmap="gray", image_size=None, show=True, figure_path=None):
     """
     Renders reconstructions as images.
 
@@ -89,11 +92,14 @@ def render_image_reconstructions(model, x_input, cmap="gray", image_size=None):
         ax.get_yaxis().set_visible(False)
         plt.title("Reconstruction")
 
-    plt.show()
+    if show == True:
+        plt.show()
+    if figure_path != None:
+        plt.savefig(figure_path)
     plt.close()
 
 
-def render_image_latent_space(decoder, number_of_samples, latent_dim_1=0, latent_dim_2=1, space_range=4, cmap=None):
+def render_image_latent_space(decoder, number_of_samples, latent_dim_1=0, latent_dim_2=1, space_range=4, cmap="gray", show=True, figure_path=None):
 
     latent_dim = decoder.inputs[0].shape[1]
 
@@ -112,10 +118,10 @@ def render_image_latent_space(decoder, number_of_samples, latent_dim_1=0, latent
             embeddings.append(embedding)
     embeddings = np.array(embeddings)
 
-    render_embeddings(embeddings, rows=number_of_samples, columns=number_of_samples, cmap=cmap)
+    render_embeddings(embeddings, rows=number_of_samples, columns=number_of_samples, cmap=cmap, show=show, figure_path=figure_path)
 
 
-def render_embeddings(embeddings, rows, columns, title=None, cmap=None):
+def render_embeddings(embeddings, rows, columns, title=None, cmap=None, show=True, figure_path=None):
 
     figure = plt.figure(figsize=(24, 24))
     figure.subplots_adjust(hspace=0.1, wspace=0.001)
@@ -138,11 +144,14 @@ def render_embeddings(embeddings, rows, columns, title=None, cmap=None):
 
             index += 1
 
-    plt.show()
+    if show == True:
+        plt.show()
+    if figure_path != None:
+        plt.savefig(figure_path)
     plt.close()
 
 
-def render_encodings(encoder, x_input, y_output):
+def render_encodings(encoder, x_input, y_output, show=True, figure_path=None):
 
     x_test_encoded = encoder.predict(x_input, batch_size=32)
     if len(encoder.outputs) == 3:
@@ -151,8 +160,12 @@ def render_encodings(encoder, x_input, y_output):
     plt.figure(figsize=(6, 6))
     plt.scatter(x_test_encoded[:, 0], x_test_encoded[:, 1], c=y_output, cmap="inferno")
     plt.colorbar()
-    plt.show()
+    if show == True:
+        plt.show()
+    if figure_path != None:
+        plt.savefig(figure_path)
     plt.close()
+
 
 
 def build_dense_ae(input_shape, latent_dim, hidden_units=[], hidden_activation="relu"):

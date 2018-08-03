@@ -1,8 +1,9 @@
-NGDLM
+NGDLM - Next Generation Deep Learning Models
 ===============================
 
-version number: 0.0.1-rc1
-author: Dr. Tristan Behrens
+Version number: 0.0.1
+
+Author: Dr. Tristan Behrens
 
 Overview
 --------
@@ -28,7 +29,9 @@ Demo - Variational Autoencoders
 
 Variational Autoencoders are great! They facilitate unsupervised learning with any data. What do they do? They let you embed any data into latent space. And they let you generate data from that latent space. Both directions! And it works without labels. Do you know another good thing? VAEs latent space is interpolateable. 
 
-The trouble with VAEs is their construction. You see, you have to create an encoder and a decoder. After that you have to glue them together while making sure that the encoder predicts Gaussian distributions. And finally you have to add the VAE-loss. Sounds complicated? Yes, it is. But with NGDLM those efforts are reduced to a minimum. See for yourself, how you can train a VAE with NGDLM:
+![VAE](resources/VAE.png)
+
+The trouble with VAEs is their construction. You see, you have to create an encoder and a decoder. That is easy. After that you have to glue them together. While making sure that the encoder predicts Gaussian distributions. And finally you have to add the VAE-loss. Sounds complicated? Yes, it is. But with NGDLM those efforts are reduced to a minimum. See for yourself, how you can train a VAE with NGDLM:
 
 ```python
 # Import NGDLM models.
@@ -64,10 +67,12 @@ loss = vae.model.evaluate(x_input_test, x_input_test)
 print("Loss:", loss)
 ```
 
-So you just create the encoder and the decoder. NGDLM then turns both into a VAE!
+So you just create the encoder and the decoder. NGDLM then turns both into a VAE and makes sure that it trains perfectly using the VAE-loss!
 
 Demo - Visualizing Variational Autoencoders
 ------------
+
+NGDLM provides means for vizializing.
 
 ```Python
 # Import NGDLM utils.
@@ -91,6 +96,8 @@ Demo - Triplet-Loss Training
 ------------
 
 Let me provide another example... Remember [FaceNet](https://arxiv.org/abs/1503.03832)? Right, Google's Neural Net that takes photos of faces and embeds them into a vector. Yes, like word-embeddings. What they did is something huge. They trained with Triplet-Loss. You create a neural network that maps faces to embeddings. You then use three copies of that network and combine them into one huge Neural Net. And on top of that you than add the Triplet-Loss, which minimizes the distance between samples of the same class and maximizes the disctance between samples of different classes. Sounds like a huge effort implementing it? True!
+
+![TL](resources/TL.png)
 
 TODO Sampling strategy...
 
@@ -154,6 +161,8 @@ ngdlutils.render_encodings(tl.base, x_input_test, y_output_test)
 
 Demo - Generative Adversarial Nets
 -------------------------------------
+
+![GAN](resources/GAN.png)
 
 ```Python
 # Import NGDLM models.
