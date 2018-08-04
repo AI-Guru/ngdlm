@@ -24,6 +24,20 @@ NGDLM is a toolkit that helps you to easily create and train Deep Neural Network
 * Generative Adversarial Nets (GANs)
 
 
+Installation / Usage
+--------------------
+
+To install use pip:
+
+    $ pip install git+https://github.com/ai-guru/ngdlm.git
+
+
+Or clone the repo:
+
+    $ git clone https://github.com/ai-guru/ngdlm.git
+    $ python setup.py install
+
+
 Demo - Variational Autoencoders
 ------------
 
@@ -72,25 +86,51 @@ So you just create the encoder and the decoder. NGDLM then turns both into a VAE
 Demo - Visualizing Variational Autoencoders
 ------------
 
-NGDLM provides means for vizializing.
+Deep Learning is always about good visuals. How else would you know how good your training is? What is the progress of your model? What is going on? NGDLM provides means for vizializing many aspects of Deep Learning. Most of them are tailored for the Deep Learning models we support.
+
+Just import the `utils` module and you are fine:
 
 ```Python
 # Import NGDLM utils.
 from ngdlm import utils as ngdlutils
+```
 
+The most important thing is to render training progress. You can render the history of training like this:
+
+```Python
 # Visualizing variational autoencoder.
 print("Rendering history...")
 ngdlutils.render_history(history)
+```
 
+![VAE](resources/vae-history.png)
+
+If you want to know how good your VAE is on reconstructing images, you can do this:
+
+```Python
 print("Rendering reconstructions...")
 ngdlutils.render_image_reconstructions(vae, x_input_train[0:10])
+```
 
+![VAE](resources/vae-reconstructions.png)
+
+Of course, inspecting the latent space of a VAE is something very, very nice. This helps you getting an idea how the latent space is structured:
+
+```Python
 print("Rendering latent-space...")
 ngdlutils.render_image_latent_space(vae.decoder, 10)
+```
 
+![VAE](resources/vae-latentspace.png)
+
+And finally, you can also plot how your data is arranged in latent space, assuming that you have their labels:
+
+```Python
 print("Rendering encodings...")
 ngdlutils.render_encodings(vae.encoder, x_input_test, y_output_test)
 ```
+
+![VAE](resources/vae-encodings.png)
 
 Demo - Triplet-Loss Training
 ------------
@@ -99,9 +139,9 @@ Let me provide another example... Remember [FaceNet](https://arxiv.org/abs/1503.
 
 ![TL](resources/TL.png)
 
-TODO Sampling strategy...
+And constructing the net is just the beginning. For Triplet-Loss training you need a sampling strategy. Usually during training you select for each sample a minibatch for positives and one for negatives. You then use the current model in order to find the positive that is farthest away and the negative that is closest to the current sample. This is a complicated algorithm. Which is implemented in NGDLM.
 
-Let me show you how this looks with NGDLM:
+Let me show you how Triplet-Loss training looks like with NGDLM:
 
 ```python
 # Import NGDLM models.
@@ -143,26 +183,31 @@ print("Loss:", loss)
 Demo - Visualizing Triplet-Loss
 ------------
 
+TODO
 
 ```python
-# Import NGDLM utils.
-from ngdlm import utils as ngdlutils
-
-# Visualizing triplet-loss.
 print("Rendering history...")
 ngdlutils.render_history(history)
+```
 
+TODO
+
+```python
 print("Rendering encodings...")
 ngdlutils.render_encodings(tl.base, x_input_train, y_output_train)
 ngdlutils.render_encodings(tl.base, x_input_test, y_output_test)
 ```
-
+TODO
 
 
 Demo - Generative Adversarial Nets
 -------------------------------------
 
+GANs are yet another story. They are a mix of Deep Learning and Game Theory. Here you introduce a generator that generates samples for latent space. And you introduce a discriminator that predicts whether an image is fake or not. You train them at the same time. It is a competition. In the end you will have a generator that creates very convincing samples.
+
 ![GAN](resources/GAN.png)
+
+The GAN architecture looks a little complicated. It is. Also the training is complex. Well, you train two nets at the same time that are opponents. With NGDLM it is rather easy to create and train GANs. Have a look:
 
 ```Python
 # Import NGDLM models.
@@ -191,15 +236,12 @@ gan.summary()
 history = gan.fit(x_input_train, epochs=30000, batch_size=32, sample_interval=200)
 ```
 
-Installation / Usage
---------------------
 
-To install use pip:
+Get in touch
+------------
 
-    $ pip install git+https://github.com/ai-guru/ngdlm.git
+TODO
 
-
-Or clone the repo:
-
-    $ git clone https://github.com/ai-guru/ngdlm.git
-    $ python setup.py install
+[Slack](https://ai-guru.slack.com)
+[Facebook](https://www.facebook.com/AIGuruTristanBehrens)
+[LinkedIn](https://www.linkedin.com/in/tristan-behrens-734967a2/)
