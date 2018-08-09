@@ -14,7 +14,7 @@ def render_history(history, zero_limit=False, show=True, figure_path=None):
     Renders a training history.
 
     Args:
-        history: A Keras history object.
+        history: A Keras history object or just a plain history dictionary.
 
     Returns:
         None
@@ -100,6 +100,20 @@ def render_image_reconstructions(model, x_input, cmap="gray", image_size=None, s
 
 
 def render_image_latent_space(decoder, number_of_samples, latent_dim_1=0, latent_dim_2=1, space_range=4, cmap="gray", show=True, figure_path=None):
+    """
+    Renders the latent space of a decoder.
+
+    Args:
+        decoder (type): description
+        number_of_samples (type): description
+        latent_dim_1 (type): description
+        latent_dim_2 (type): description
+        space_range (type): description
+        cmap (type): description
+        show (type): description
+        figure_path (type): description
+
+    """
 
     latent_dim = decoder.inputs[0].shape[1]
 
@@ -169,10 +183,18 @@ def render_encodings(encoder, x_input, y_output, show=True, figure_path=None):
 
 
 def build_dense_ae(input_shape, latent_dim, hidden_units=[], hidden_activation="relu"):
+    """
+    Builds a dense AE.
+    """
+
     return _build_dense(type="ae", input_shape=input_shape, latent_dim=latent_dim, hidden_units=hidden_units, hidden_activation=hidden_activation)
 
 
 def build_dense_vae(input_shape, latent_dim, hidden_units=[], hidden_activation="relu"):
+    """
+    Builds a dense VAE.
+    """
+
     return _build_dense(type="vae", input_shape=input_shape, latent_dim=latent_dim, hidden_units=hidden_units, hidden_activation=hidden_activation)
 
 

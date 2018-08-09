@@ -11,13 +11,23 @@ import os
 import matplotlib.pyplot as plt
 
 class AE(Model):
-    """ Autoencoder. This is a simple autoencoder consisting of an encoder and a decoder."""
+    """
+    Autoencoder. This is a simple autoencoder consisting of an encoder and a decoder.
 
+    You can use the class like this:
+    >>> encoder = ...
+    >>> decoder = ...
+    >>> ae = Autoencoder(encoder=encoder, decoder=decoder)
+    >>> ae.compile(...)
+    >>> ae.fit(...)
+
+    """
 
     def __init__(
         self,
         encoder=None, decoder=None, autoencoder=None):
         super(AE, self).__init__()
+
 
         # For calling this as a super-constructor.
         parameters = [encoder, decoder]
@@ -56,6 +66,13 @@ class AE(Model):
         weighted_metrics=None,
         target_tensors=None,
         **kwargs):
+        """
+        Compiles the model.
+
+        This is the same as compilation in Keras.
+
+        """
+
 
         assert "reconstruction_loss" not in kwargs, "Not expected to use reconstruction_loss in AE."
 
@@ -79,6 +96,9 @@ class AE(Model):
         steps_per_epoch=None,
         validation_steps=None,
         **kwargs):
+        """
+        Trains the autoencoder.
+        """
 
         return self.autoencoder.fit(x, y, batch_size, epochs, verbose, callbacks, validation_split, validation_data, shuffle, class_weight, sample_weight, initial_epoch, steps_per_epoch, validation_steps, **kwargs)
 
@@ -98,8 +118,10 @@ class AE(Model):
         use_multiprocessing=False,
         shuffle=True,
         initial_epoch=0):
+        """
+        Trains the autoencoder with a generator.
+        """
 
-        #return self.model.fit_generator(generator, steps_per_epoch, epochs, verbose, callbacks, validation_data, validation_steps, class_weight, max_queue_size, workers, use_multiprocessing, shuffle, initial_epoch)
         return self.autoencoder.fit_generator(
             generator, steps_per_epoch, epochs,
             verbose=verbose,
@@ -122,37 +144,75 @@ class AE(Model):
         verbose=1,
         sample_weight=None,
         steps=None):
+        """
+        Evaluates the autoencoder.
+        """
 
         return self.autoencoder.evaluate(x, y, batch_size, verbose, sample_weight, steps=None)
 
 
     def predict(self, x, batch_size=None, verbose=0, steps=None):
+        """
+        Does a prediction. This is the same as :func:`~ngdlm.models.AE.predict_reconstruct_from_samples`
+        """
 
         return self.predict_reconstruct_from_samples(x, batch_size, verbose, steps)
 
 
     def predict_reconstruct_from_samples(self, x, batch_size=None, verbose=0, steps=None):
+        """
+        Reconstructs samples.
+
+        Samples are firstly mapped to latent space using the encoder.
+        The resulting latent vectors are then mapped to reconstruction space via the decoder.
+        """
 
         return self.autoencoder.predict(x, batch_size, verbose, steps)
 
 
     def predict_embed_samples_into_latent(self, x, batch_size=None, verbose=0, steps=None):
+        """
+        Embeds samples into latent space using the encoder.
+        """
 
         return self.encoder.predict(x, batch_size, verbose, steps)
 
 
     def predict_reconstruct_from_latent(self, x, batch_size=None, verbose=0, steps=None):
+        """
+        Maps latent vectors to reconstruction space using the decoder.
+        """
 
         return self.decoder.predict(x, batch_size, verbose, steps)
 
 
     def summary(self):
+        """
+        Provides a summary.
+        """
+
+        print("Encoder:")
         self.encoder.summary()
+        print("Decoder:")
         self.decoder.summary()
+        print("Autoencoder:")
         self.autoencoder.summary()
 
 
     def save(self, path):
+        """
+        Saves the autoencoder.
+
+        This includes the whole autoencoder plus the encoder and the decoder.
+        The encoder and decoder use the path plus a respective annotation.
+
+        This code
+
+        >>> ae.save("myae.h5")
+
+        will create the files *myae.h5*, *myae-encoder.h5*, and *myae-decoder.h5*.
+
+        """
         self.autoencoder.save(path)
         self.encoder.save(append_to_filepath(path, "-encoder"))
         self.decoder.save(append_to_filepath(path, "-decoder"))
@@ -234,8 +294,12 @@ class CAE(AE):
         target_tensors=None,
         lam = 1e-4,
         **kwargs):
+        """
+        Compiles the CAE.
 
-        #assert loss == "mse", "Expected 'mse' as loss."
+        Additionally to the default functionality of *compile*, it adds the contractive loss.
+        This loss takes the provided loss and adds a penalty term.
+        """
 
         self.loss = loss
 
@@ -265,8 +329,9 @@ class CAE(AE):
 
 
 class VAE(AE):
-    """ Variational Autoencoder. This consists of an encoder and a decoder plus an interpolateable latent space. """
-
+    """
+    Variational Autoencoder. This consists of an encoder and a decoder plus an interpolateable latent space.
+    """
 
     def __init__(
         self,
@@ -315,10 +380,22 @@ class VAE(AE):
         sample_weight_mode=None,
         weighted_metrics=None,
         target_tensors=None,
-        reconstruction_loss="mse",
         **kwargs):
+        """
+        Compiles the VAE.
 
-        assert loss == None, "Not expected to provide an explicit loss for VAE. Use 'reconstruction_loss'"
+        Additionally to the default functionality of *compile*, it adds the VAE-loss.
+        This loss takes the provided loss and interprets it as a reconstruction-loss.
+
+        The VAE loss is similar to
+
+        >>> vae_loss = mean(r_loss + kl_loss)
+
+        See the literature for details.
+
+        """
+
+        self.loss = loss
 
         # Inputs.
         inputs = self.encoder.inputs[0]
@@ -337,14 +414,10 @@ class VAE(AE):
             loss_outputs = K.flatten(loss_outputs)
 
             # Reconstruction loss.
-            if reconstruction_loss == "mse":
-                r_loss = losses.mse(loss_inputs, loss_outputs)
-            elif reconstruction_loss == "binary_crossentropy":
-                r_loss = losses.binary_crossentropy(loss_inputs, loss_outputs)
-            elif reconstruction_loss == "categorical_crossentropy":
-                r_loss = losses.categorical_crossentropy(loss_inputs, loss_outputs)
+            if isinstance(self.loss, str):
+                r_loss = losses.get(self.loss)
             else:
-                raise Exception("Unexpected: " + str(reconstruction_loss))
+                r_loss = self.loss
             r_loss *= inputs_dim
 
             # kl loss.
@@ -387,7 +460,11 @@ def sampling(args):
 
 
 class TL(Model):
-    """ Triplet-Loss trained Neural Network. """
+    """
+    Triplet-Loss trained Neural Network.
+
+    https://arxiv.org/abs/1503.03832
+    """
 
     def __init__(self, base=None, siamese=None):
         super(TL, self).__init__()
@@ -444,7 +521,22 @@ class TL(Model):
         target_tensors=None,
         triplet_loss="mse",
         **kwargs):
+        """
+        Compiles the TL.
 
+        Additionally to the default functionality of *compile*, it adds the triplet-loss.
+        In order to do so you have to provide it via the parameter *triplet_loss*.
+
+        The VAE loss is similar to
+
+        >>> vae_loss = max(0.0, pos_dist - neg_dist + alpha)
+
+        See the literature for details.
+
+        Additional args:
+            triplet_loss (string): The base-loss for the triplet-loss. Values are either *euclidean* for euclidean norm or *cosine* for cosine similarity.
+
+        """
         assert loss == None, "Not expected to provide an explicit loss for TL. Use 'triplet_loss'"
 
         self.triplet_loss = triplet_loss
@@ -491,6 +583,12 @@ class TL(Model):
         steps_per_epoch=None,
         validation_steps=None,
         **kwargs):
+        """
+        This is basically the same as in vanilla Keras.
+
+        Additional args:
+            minibatch_size (int): The model internally does some sampling. The *minibatch_size* specifies how many candidates to use in order to create a triplet for training.
+        """
 
         assert minibatch_size != None, "ERROR! Must provide 'minibatch_size'."
         assert steps_per_epoch != None, "ERROR! Must provide 'steps_per_epoch'."
@@ -632,6 +730,9 @@ class TL(Model):
         use_multiprocessing=False,
         shuffle=True,
         initial_epoch=0):
+        """
+        Coming soon...
+        """
 
         print("TODO: implement fit_generator!")
 
@@ -648,6 +749,9 @@ class TL(Model):
         verbose=1,
         sample_weight=None,
         steps=None):
+        """
+        Evaluates the model. Same as vanilla Keras.
+        """
 
         return self.siamese.evaluate(x, y, batch_size, verbose, sample_weight, steps=None)
 
@@ -658,28 +762,56 @@ class TL(Model):
         batch_size=None,
         verbose=0,
         steps=None):
+        """
+        Does a prediction. Same as vanilla Keras.
+        """
 
         return self.siamese.predict(x, batch_size, verbose, steps)
 
 
     def summary(self):
+        """
+        Provides a summary.
+        """
+
+        print("Basemodel:")
         self.base.summary()
+        print("Siamese model:")
         self.siamese.summary()
 
 
     def save(self, path):
+        """
+        Saves the TL.
+
+        This includes the whole Siamese Net plus the base-model.
+
+        This code
+
+        >>> tl.save("myae.h5")
+
+        will create the files *tl.h5*, and *tl-base.h5*.
+
+        """
         self.siamese.save(path)
         self.base.save(append_to_filepath(path, "-base"))
 
 
 
 class TLAE(Model):
+    """
+    Triplet-loss trained Autoencoder. Coming soon...
+    """
+
 
     def __init__(self, encoder, decoder, latent_dim):
         print("Initializing TAE")
 
 
 class TLVAE(Model):
+    """
+    Triplet-loss trained Variational Autoencoder. Coming soon...
+    """
 
     def __init__(self, encoder, decoder, latent_dim):
         print("Initializing TVAE")
@@ -718,6 +850,9 @@ class GAN(Model):
         weighted_metrics=None,
         target_tensors=None,
         **kwargs):
+        """
+        Compiles the model. Same as vanilla Keras.
+        """
 
         self.gan.compile(optimizer, loss, metrics, loss_weights, sample_weight_mode, weighted_metrics, **kwargs)
 
@@ -741,6 +876,11 @@ class GAN(Model):
         steps_per_epoch=None,
         validation_steps=None,
         **kwargs):
+        """
+        Trains the GAN.
+
+        This is almost the same as in vanilla Keras.
+        """
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -780,6 +920,10 @@ class GAN(Model):
 
 
     def sample_images(self, epoch):
+        """
+        Samples images.
+        """
+
         r, c = 5, 5
         noise = np.random.normal(0, 1, (r * c, 100))
         gen_imgs = self.generator.predict(noise)
@@ -800,24 +944,50 @@ class GAN(Model):
 
 
     def summary(self):
+        """
+        Provides a summary.
+        """
+
+        print("Generator:")
         self.generator.summary()
+        print("Discriminator:")
         self.discriminator.summary()
+        print("GAN:")
         self.gan.summary()
 
 
     def save(self, path):
+        """
+        Saves the GAN.
+
+        This includes the whole autoencoder plus the encoder and the decoder.
+        The encoder and decoder use the path plus a respective annotation.
+
+        This code
+
+        >>> ae.save("myae.h5")
+
+        will create the files *myae.h5*, *myae-encoder.h5*, and *myae-decoder.h5*.
+
+        """
         self.gan.save(path)
         self.generator.save(append_to_filepath(path, "-generator"))
         self.discriminator.save(append_to_filepath(path, "-discriminator"))
 
 
 def euclidean_loss(left, right):
+    """
+    Computes the euclidean loss.
+    """
 
     distance = K.sum(K.square(left - right), axis=1)
     return distance
 
 
 def cosine_loss(left, right):
+    """
+    Computes the cosine loss.
+    """
 
     left = K.l2_normalize(left, axis=-1)
     right = K.l2_normalize(right, axis=-1)
@@ -829,6 +999,10 @@ def cosine_loss(left, right):
 
 
 def compute_latent_extremum(latent_sample, latent_samples, extremum_type, norm):
+    """
+    Computes the latent extremum.
+    Used for sampling in triplet-loss training.
+    """
     distances = [compute_latent_distance(latent_sample, l, norm) for l in latent_samples]
     if extremum_type == "argmax":
         return np.argmax(distances)
@@ -839,6 +1013,9 @@ def compute_latent_extremum(latent_sample, latent_samples, extremum_type, norm):
 
 
 def compute_latent_distance(latent_sample1, latent_sample2, norm):
+    """
+    Computes distances in latent space.
+    """
     if norm == "euclidean":
         distance = np.sum(np.square(latent_sample2 - latent_sample1))
         return distance
@@ -849,28 +1026,45 @@ def compute_latent_distance(latent_sample1, latent_sample2, norm):
         raise Exception("Unexpected norm: " + norm)
 
 
-
 def load_ae_model(path):
+    """
+    Loads an AE from a given path.
+    """
     return load_model(path, AE)
 
 
 def load_cae_model(path):
+    """
+    Loads an CAE from a given path.
+    """
     return load_model(path, CAE)
 
 
 def load_tdlstmae_model(path):
+    """
+    Loads an TDLSTMAE from a given path.
+    """
     return load_model(path, TDLSTMAE)
 
 
 def load_vae_model(path):
+    """
+    Loads an VAE from a given path.
+    """
     return load_model(path, VAE)
 
 
 def load_tl_model(path):
+    """
+    Loads an TL from a given path.
+    """
     return load_model(path, TL)
 
 
 def load_model(path, model_type):
+    """
+    Loads an model from a given path using a given type.
+    """
     model = models.load_model(path)
 
     if model_type is AE:
@@ -890,6 +1084,9 @@ def load_model(path, model_type):
 
 
 def append_to_filepath(filepath, string):
+    """
+    Adds a string to a file-path. Right before the extension.
+    """
 
     filepath, extension = os.path.splitext(filepath)
     return filepath + string + extension
