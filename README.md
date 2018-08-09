@@ -1,14 +1,12 @@
 NGDLM - Next Generation Deep Learning Models
 ===============================
 
-Version number: 0.0.1
-
-Author: Dr. Tristan Behrens
+[Dr. Tristan Behrens](http://ai-guru.de)
 
 Overview
 --------
 
-Next Generation Deep Learning Models (NGDLM) for Keras is here! 
+Next Generation Deep Learning Models (NGDLM) for Keras is here!
 
 We live in such great times. It is marvellous! You see, basically everyone can do Deep Learning today. This was impossible about a decade ago. Thanks to so many people and institutions so many people have a blast training and deploying Deep Neural Networks.
 
@@ -37,12 +35,15 @@ Or clone the repo:
     $ git clone https://github.com/ai-guru/ngdlm.git
     $ python setup.py install
 
+I guess now you want to see demos? There you go! Note, that there are more examples in the repo.
+
 
 Demo - Variational Autoencoders
 ------------
 
-Variational Autoencoders are great! They facilitate unsupervised learning with any data. What do they do? They let you embed any data into latent space. And they let you generate data from that latent space. Both directions! And it works without labels. Do you know another good thing? VAEs latent space is interpolateable. 
+Variational Autoencoders are great! They facilitate unsupervised learning with any data. What do they do? They let you embed any data into latent space. And they let you generate data from that latent space. Both directions! And this works without labels. Do you know another good thing? VAEs latent space is interpolateable. This means that similar samples end up close to each other in latent space.
 
+This is how a VAE architecture looks like:
 ![VAE](resources/VAE.png)
 
 The trouble with VAEs is their construction. You see, you have to create an encoder and a decoder. That is easy. After that you have to glue them together. While making sure that the encoder predicts Gaussian distributions. And finally you have to add the VAE-loss. Sounds complicated? Yes, it is. But with NGDLM those efforts are reduced to a minimum. See for yourself, how you can train a VAE with NGDLM:
@@ -132,10 +133,12 @@ ngdlutils.render_encodings(vae.encoder, x_input_test, y_output_test)
 
 ![VAE](resources/vae-encodings.png)
 
+Nice, isn't it?
+
 Demo - Triplet-Loss Training
 ------------
 
-Let me provide another example... Remember [FaceNet](https://arxiv.org/abs/1503.03832)? Right, Google's Neural Net that takes photos of faces and embeds them into a vector. Yes, like word-embeddings. What they did is something huge. They trained with Triplet-Loss. You create a neural network that maps faces to embeddings. You then use three copies of that network and combine them into one huge Neural Net. And on top of that you than add the Triplet-Loss, which minimizes the distance between samples of the same class and maximizes the disctance between samples of different classes. Sounds like a huge effort implementing it? True!
+Let me provide another example... Remember [FaceNet](https://arxiv.org/abs/1503.03832)? Right, Google's Neural Net that takes photos of faces and embeds them into a vector. Yes, like word-embeddings. What they did is something huge. They trained with Triplet-Loss. You create a neural network that maps faces to embeddings. You then use three copies of that network and combine them into one huge Neural Net. And on top of that you than add the Triplet-Loss, which minimizes the distance between samples of the same class and maximizes the distance between samples of different classes. Sounds like a huge effort implementing it? True!
 
 ![TL](resources/TL.png)
 
@@ -173,41 +176,41 @@ history = tl.fit(
         validation_data=(x_input_validate, y_output_validate),
         validation_steps=500
     )
-
-# Evaluate.
-print("Evaluate...")
-loss = ae.model.evaluate(x_input_test, x_input_test)
-print("Loss:", loss)
 ```
 
 Demo - Visualizing Triplet-Loss
 ------------
 
-TODO
+Again, visualizing works like a charm with NGDLM. Here is the history:
 
 ```python
 print("Rendering history...")
 ngdlutils.render_history(history)
 ```
 
-TODO
+![TL history](resources/tl-history.png)
+
+And here is how to render the encodings both for training and validation:
 
 ```python
 print("Rendering encodings...")
 ngdlutils.render_encodings(tl.base, x_input_train, y_output_train)
-ngdlutils.render_encodings(tl.base, x_input_test, y_output_test)
+ngdlutils.render_encodings(tl.base, x_input_validate, y_output_validate)
 ```
-TODO
 
+![TL history](resources/tl-encodings-train.png)
+![TL history](resources/tl-encodings-train.png)
 
 Demo - Generative Adversarial Nets
 -------------------------------------
 
-GANs are yet another story. They are a mix of Deep Learning and Game Theory. Here you introduce a generator that generates samples for latent space. And you introduce a discriminator that predicts whether an image is fake or not. You train them at the same time. It is a competition. In the end you will have a generator that creates very convincing samples.
+GANs are yet another story. They are a mix of Deep Learning and Game Theory. Here you introduce a Generator (G) that generates samples for latent space. And you introduce a Discriminator (D) that predicts whether an image is fake or not. You train them at the same time. It is a competition. In the end you will have a generator that creates very convincing samples.
+
+This is how such an architecture looks like:
 
 ![GAN](resources/GAN.png)
 
-The GAN architecture looks a little complicated. It is. Also the training is complex. Well, you train two nets at the same time that are opponents. With NGDLM it is rather easy to create and train GANs. Have a look:
+The GAN architecture looks a little complicated. It is. Also the training is complex. Well, you train two nets that are opponents at the same time. With NGDLM it is rather easy to create and train GANs. Have a look:
 
 ```Python
 # Import NGDLM models.
@@ -240,8 +243,12 @@ history = gan.fit(x_input_train, epochs=30000, batch_size=32, sample_interval=20
 Get in touch
 ------------
 
-TODO
+Feel free to contact me anytime! You can reach me via the resources below.
+If you would like to create a bug-report or a feature-request do not hesitate to do so [here](https://github.com/AI-Guru/ngdlm/issues).
 
-[Slack](https://ai-guru.slack.com)
-[Facebook](https://www.facebook.com/AIGuruTristanBehrens)
-[LinkedIn](https://www.linkedin.com/in/tristan-behrens-734967a2/)
+- [Official AI-Guru Homepage](https://ai-guru.de/)
+- [AI-Guru Slack](https://join.slack.com/t/ai-guru/shared_invite/enQtNDEzNjUwMTIwODM0LTdlOWQ1ZTUyZmQ5YTczOTUxYzk2YWI4ZmE0NTdmZGQxMmUxYmUwYmRhMDg1ZDU0NTUxMDI2OWVkOGFjYTViOGQ)
+- [AI Guru Facebookpge](https://www.facebook.com/AIGuruTristanBehrens)
+- [Tristan Behrens on LinkedIn](https://www.linkedin.com/in/tristan-behrens-734967a2/)
+
+You can add me on the social platforms anytime! Namaste!
