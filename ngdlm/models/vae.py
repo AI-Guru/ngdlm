@@ -74,6 +74,7 @@ class VAE(AE):
 
         """
 
+        assert loss != None, "Must provide loss."
         self.loss = loss
 
         # Inputs.

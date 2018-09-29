@@ -351,6 +351,4 @@ class TestModels(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    logging.basicConfig( stream=sys.stderr )
-    logging.getLogger( "SomeTest.testSomething" ).setLevel( logging.DEBUG )
     unittest.main()

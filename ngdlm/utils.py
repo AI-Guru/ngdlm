@@ -54,7 +54,6 @@ def render_image_reconstructions(model, x_input, cmap="gray", image_size=None, s
         None
     """
 
-
     assert len(x_input.shape) == 3 or len(x_input.shape) == 4, "Expected data to have 3 or 4 dimensions."
 
     n = len(x_input)
@@ -78,6 +77,12 @@ def render_image_reconstructions(model, x_input, cmap="gray", image_size=None, s
             image_reconstructed = image_reconstructed.resize(image_size, Image.ANTIALIAS)
             image_reconstructed = np.array(image_reconstructed)
 
+        # Reshape if necessary.
+        if len(image_original.shape) == 3 and image_original.shape[2] == 1:
+            image_original = image_original.reshape((image_original.shape[0], image_original.shape[1]))
+        if len(image_reconstructed.shape) == 3 and image_reconstructed.shape[2] == 1:
+            image_reconstructed = image_reconstructed.reshape((image_reconstructed.shape[0], image_reconstructed.shape[1]))
+
         # Original.
         ax = plt.subplot(2, n, i + 1)
         plt.imshow(image_original, cmap=cmap)
@@ -99,6 +104,68 @@ def render_image_reconstructions(model, x_input, cmap="gray", image_size=None, s
     plt.close()
 
 
+def render_image_inputs_outputs(x_input, x_output, cmap="gray", image_size=None, show=True, figure_path=None):
+    """
+    Renders inputs and corresponding outputs as images.
+
+    Takes an array of input samples and output samples and renders them.
+
+    Args:
+        model (Model): A model for predicting the reconstructions.
+        x_input (ndarray): A array of input samples.
+
+    Returns:
+        None
+    """
+
+    assert len(x_input.shape) == 3 or len(x_input.shape) == 4, "Expected data to have 3 or 4 dimensions."
+
+    n = len(x_input)
+
+    plt.figure(figsize=(20, 4))
+
+    for i in range(n):
+
+        # Getting the images.
+        image_original = x_input[i]
+        image_reconstructed = x_output[i]
+
+        # Optional resizing.
+        if image_size != None:
+            image_original = Image.fromarray(image_original)
+            image_original = image_original.resize(image_size, Image.ANTIALIAS)
+            image_original = np.array(image_original)
+            image_reconstructed = Image.fromarray(image_reconstructed)
+            image_reconstructed = image_reconstructed.resize(image_size, Image.ANTIALIAS)
+            image_reconstructed = np.array(image_reconstructed)
+
+        # Reshape if necessary.
+        if len(image_original.shape) == 3 and image_original.shape[2] == 1:
+            image_original = image_original.reshape((image_original.shape[0], image_original.shape[1]))
+        if len(image_reconstructed.shape) == 3 and image_reconstructed.shape[2] == 1:
+            image_reconstructed = image_reconstructed.reshape((image_reconstructed.shape[0], image_reconstructed.shape[1]))
+
+        # Original.
+        ax = plt.subplot(2, n, i + 1)
+        plt.imshow(image_original, cmap=cmap)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        plt.title("Input")
+
+        # Reconstruction.
+        ax = plt.subplot(2, n, i + 1 + n)
+        plt.imshow(image_reconstructed, cmap=cmap)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        plt.title("Output")
+
+    if show == True:
+        plt.show()
+    if figure_path != None:
+        plt.savefig(figure_path)
+    plt.close()
+
+
 def render_image_latent_space(decoder, number_of_samples, latent_dim_1=0, latent_dim_2=1, space_range=4, cmap="gray", show=True, figure_path=None):
     """
     Renders the latent space of a decoder.
@@ -112,7 +179,6 @@ def render_image_latent_space(decoder, number_of_samples, latent_dim_1=0, latent
         cmap (type): description
         show (type): description
         figure_path (type): description
-
     """
 
     latent_dim = decoder.inputs[0].shape[1]
@@ -136,6 +202,21 @@ def render_image_latent_space(decoder, number_of_samples, latent_dim_1=0, latent
 
 
 def render_embeddings(embeddings, rows, columns, title=None, cmap=None, show=True, figure_path=None):
+    """
+    Renders embeddings.
+
+    Takes a list of embeddings and renders them as a table.
+
+    Args:
+        decoder (type): description
+        number_of_samples (type): description
+        latent_dim_1 (type): description
+        latent_dim_2 (type): description
+        space_range (type): description
+        cmap (type): description
+        show (type): description
+        figure_path (type): description
+    """
 
     figure = plt.figure(figsize=(24, 24))
     figure.subplots_adjust(hspace=0.1, wspace=0.001)

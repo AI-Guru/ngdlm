@@ -1,4 +1,6 @@
+from keras import backend as K
 import os
+import numpy as np
 
 
 def euclidean_loss(left, right):
