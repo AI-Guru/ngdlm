@@ -78,7 +78,7 @@ history = vae.fit(
 
 # Evaluate.
 print("Evaluate...")
-loss = vae.model.evaluate(x_input_test, x_input_test)
+loss = vae.evaluate(x_input_test, x_input_test)
 print("Loss:", loss)
 ```
 
