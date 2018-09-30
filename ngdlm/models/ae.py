@@ -18,7 +18,7 @@ class AE(Model):
     def __init__(
         self,
         encoder=None, decoder=None, autoencoder=None):
-        super(AE, self, inputs=None, outputs=None).__init__()
+        super(AE, self).__init__()
 
         # For calling this as a super-constructor.
         parameters = [encoder, decoder]
