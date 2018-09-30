@@ -40,6 +40,39 @@ def render_history(history, zero_limit=False, show=True, figure_path=None):
     plt.close()
 
 
+def render_histories(histories, titles, keys, zero_limit=False, show=True, figure_path=None):
+    """
+    Renders training histories.
+
+    Args:
+        history: A Keras history object or just a plain history dictionary.
+
+    Returns:
+        None
+    """
+
+    for key in keys:
+
+        plt.figure(figsize=(12,8))
+        for history, title in zip(histories, titles):
+
+            if type(history) != dict:
+                history = history.history
+
+            plt.plot(history[key], label=title)
+
+        if zero_limit == True:
+            plt.ylim(ymin=0.0)
+
+        plt.title(key)
+        plt.legend()
+        if show == True:
+            plt.show()
+        if figure_path != None:
+            plt.savefig(figure_path)
+        plt.close()
+
+    
 def render_image_reconstructions(model, x_input, cmap="gray", image_size=None, show=True, figure_path=None):
     """
     Renders reconstructions as images.
