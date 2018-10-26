@@ -1,6 +1,7 @@
 from keras.engine.training import Model
 from keras import layers
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class GAN(Model):
