@@ -1,6 +1,6 @@
 from .ae import AE
-from keras.engine.training import Model
-from keras import layers
+from tensorflow.keras.models import Model
+from tensorflow.keras import layers
 from .helpers import append_to_filepath
 
 

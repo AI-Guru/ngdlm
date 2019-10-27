@@ -1,7 +1,7 @@
 from .ae import AE
 from .helpers import append_to_filepath
-from keras import losses
-from keras import backend as K
+from tensorflow.keras import losses
+from tensorflow.keras import backend as K
 
 
 class CAE(AE):

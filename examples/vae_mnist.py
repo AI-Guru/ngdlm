@@ -1,7 +1,7 @@
-from keras import models, layers
+from tensorflow.keras import models, layers
 from ngdlm import models as ngdlmodels
 from ngdlm import utils as ngdlutils
-from keras.datasets import mnist
+from tensorflow.keras.datasets import mnist
 import numpy as np
 
 

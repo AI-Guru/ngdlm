@@ -1,4 +1,4 @@
-from keras.engine.training import Model
+from tensorflow.keras.models import Model
 from .helpers import append_to_filepath
 
 

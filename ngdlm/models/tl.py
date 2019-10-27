@@ -2,9 +2,9 @@ from .helpers import append_to_filepath
 from .helpers import euclidean_loss
 from .helpers import cosine_loss
 from .helpers import compute_latent_extremum
-from keras.engine.training import Model
-from keras import layers
-from keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras import layers
+from tensorflow.keras import backend as K
 import numpy as np
 import random
 

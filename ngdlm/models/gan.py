@@ -1,5 +1,5 @@
-from keras.engine.training import Model
-from keras import layers
+from tensorflow.keras.models import Model
+from tensorflow.keras import layers
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -92,6 +92,8 @@ class GAN(Model):
 
             # Create some noise.
             noise = np.random.normal(0, 1, (batch_size, 100))
+
+            print(valid.shape, valid.dtype)
 
             # Train the generator (to have the discriminator label samples as valid).
             g_loss = self.gan.train_on_batch(noise, valid)

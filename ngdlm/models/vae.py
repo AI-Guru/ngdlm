@@ -1,9 +1,9 @@
 from .ae import AE
 from .helpers import append_to_filepath
-from keras.engine.training import Model
-from keras import layers
-from keras import losses
-from keras import backend as K
+from tensorflow.keras import models
+from tensorflow.keras import layers
+from tensorflow.keras import losses
+from tensorflow.keras import backend as K
 import numpy as np
 
 
@@ -39,7 +39,7 @@ class VAE(AE):
         z_mean = layers.Dense(self.latent_dim, name='z_mean')(encoder_output)
         z_log_var = layers.Dense(self.latent_dim, name='z_log_var')(encoder_output)
         z =layers.Lambda(sampling, output_shape=(self.latent_dim,), name='z')([z_mean, z_log_var])
-        self.encoder = Model(encoder_input, [z_mean, z_log_var, z], name='encoder')
+        self.encoder = models.Model(encoder_input, [z_mean, z_log_var, z], name='encoder')
 
         # Decoder.
         self.decoder = decoder
@@ -47,7 +47,7 @@ class VAE(AE):
         # Creating the VAE.
         inputs = self.encoder.inputs[0]
         outputs = self.decoder(self.encoder(inputs)[2]) # This is z.
-        self.autoencoder = Model(inputs, outputs, name="vae")
+        self.autoencoder = models.Model(inputs, outputs, name="vae")
 
 
     def compile(

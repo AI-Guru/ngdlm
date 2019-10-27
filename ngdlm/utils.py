@@ -5,7 +5,7 @@ Utility functions for NGDLM. General rendering and building models.
 import numpy as np
 import matplotlib.pyplot as plt
 from ngdlm import models as ngdlmodels
-from keras import models, layers
+from tensorflow.keras import models, layers
 from PIL import Image
 
 
@@ -72,7 +72,7 @@ def render_histories(histories, titles, keys, zero_limit=False, show=True, figur
             plt.savefig(figure_path)
         plt.close()
 
-    
+
 def render_image_reconstructions(model, x_input, cmap="gray", image_size=None, show=True, figure_path=None):
     """
     Renders reconstructions as images.

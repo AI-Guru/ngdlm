@@ -3,7 +3,7 @@ from .vae import VAE
 from .cae import CAE
 from .tdlstmae import TDLSTMAE
 from .tl import TL
-from keras import models
+from tensorflow.keras import models
 
 
 def load_ae_model(path):
