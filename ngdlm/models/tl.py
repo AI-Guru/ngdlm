@@ -1,3 +1,4 @@
+from collections import defaultdict
 from .helpers import append_to_filepath
 from .helpers import euclidean_loss
 from .helpers import cosine_loss
@@ -153,9 +154,7 @@ class TL(Model):
             classes = sorted(list(set(y_generator)))
 
             # Sort by classes for easy indexing.
-            class_indices = {}
-            for c in classes:
-                class_indices[c] = []
+            class_indices = defaultdict(list)
             for index, c in enumerate(y_generator):
                 class_indices[c].append(index)
 
@@ -231,11 +230,8 @@ class TL(Model):
             validation_generator = None
 
         # Create the history.
-        history_keys = [
-            "loss", "val_loss"]
-        history = {}
-        for history_key in history_keys:
-            history[history_key] = []
+        history_keys = ["loss", "val_loss"]
+        history = defaultdict(list)
 
         # Training the model
         for epoch in range(epochs):
